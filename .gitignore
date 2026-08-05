@@ -10,6 +10,6 @@ Makefile
 *.dll.a
 *.mat
 *.pjt
-
+*.asv
 
 
