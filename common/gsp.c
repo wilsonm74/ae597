@@ -90,7 +90,7 @@ void gspInitTest(unsigned int test_number)
 	} else {
 		padsEstimatorInitWaitAndSet(initState, 50, SYS_FOREVER, SYS_FOREVER, PADS_INIT_THRUST_INT_ENABLE,PADS_BEACONS_SET_1TO9); // ISS
 	}
-	ctrlPeriodSet(1000);
+	ctrlPeriodSet(100);
 }
 
 
@@ -122,8 +122,10 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 	float ctrlControl[6];
 	prop_time firing_times;
 	const int min_pulse = 10;
+    int metrology_cycle = 0;
 
-	extern const float KPattitudePD, KDattitudePD, KPpositionPD, KDpositionPD;
+	extern const float KPattitudePD, KDattitudePD, KPpositionPD, KDpositionPD,
+        VEHICLE_MASS;
 
 	//Clear all uninitialized vectors
 	memset(ctrlControl,0,sizeof(float)*6);
@@ -140,6 +142,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 			break;
 		case 2:
 			if (sysIdentityGet()==SPHERE1) {
+                metrology_cycle = ((maneuver_time % 1000U) < ctrlPeriodGet());
 				padsGlobalPeriodSet(SYS_FOREVER);				
 				ctrlStateTarget[POS_X] = 0.3f;
 			} else {
@@ -149,6 +152,11 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 			//find error
 			findStateError(ctrlStateError,ctrlState,ctrlStateTarget);
 			//call controllers
+
+            //feedforward component
+            ctrlControl[FORCE_X] += VEHICLE_MASS * trajectory_acceleration[0];
+            ctrlControl[FORCE_Y] += VEHICLE_MASS * trajectory_acceleration[1];
+            ctrlControl[FORCE_Z] += VEHICLE_MASS * trajectory_acceleration[2];
 			ctrlPositionPDgains(KPpositionPD, KDpositionPD, 
 								KPpositionPD, KDpositionPD, 
 								KPpositionPD, KDpositionPD, ctrlStateError, ctrlControl);
@@ -160,11 +168,15 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 			//mix forces/torques into thruster commands
 			ctrlMixWLoc(&firing_times, ctrlControl, ctrlState, min_pulse, 20.0f, FORCE_FRAME_INERTIAL);
 			
+            if (metrology_cycle) {
+                memset(&firing_times, 0, sizeof(prop_time));
+            }
+
 			//Set firing times
 			propSetThrusterTimes(&firing_times);
 
-			if (sysIdentityGet() == SPHERE1) {
-				padsGlobalPeriodSetAndWait(200,200);
+			if (metrology_cycle && sysIdentityGet() == SPHERE1) {
+				padsGlobalPeriodSetAndWait(1000,0);
 			}
 			if (maneuver_time>=60000) {
 				ctrlTestTerminate(TEST_RESULT_NORMAL);
