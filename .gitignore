@@ -1,0 +1,15 @@
+CMakeFiles/
+scswrapper/
+CMakeCache.txt
+CMakeLists.txt
+install_manifest.txt
+build/
+Makefile
+*.cmake
+*.dll
+*.dll.a
+*.mat
+*.pjt
+
+
+
