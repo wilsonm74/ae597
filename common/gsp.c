@@ -50,6 +50,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "ctrl_mix.h"
 #include <string.h>
 
+#include "functionLibraryMSW.h"
+
 void gspIdentitySet()
 {
    // set the logical identifier (SPHERE#) for this vehicle
