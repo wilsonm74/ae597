@@ -11,5 +11,5 @@ Makefile
 *.mat
 *.pjt
 *.asv
-
+*.sh
 
