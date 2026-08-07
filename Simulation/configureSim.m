@@ -52,6 +52,9 @@ cfg.simMode = 'mex'; % Simulation can run in 'mex' or 'simulink' modes
 % Name of Simulink Model to run (if cfg.simMode = 'simulink'), if not set 'SpheresSimulation.slx' will be used
 % cfg.simName = 'SpheresSimulation.slx'; 
 cfg.simTimeout = 150000; % Simulation timeout in ms
+                          % (maneuver 1 init: 10000ms + maneuver 2 circle:
+                          %  2 revs * 40000ms = 80000ms => 90000ms needed,
+                          %  150000ms leaves comfortable margin)
 cfg.testLocation = c.LOCATION_ISS;	%Set location to ISS
 cfg.animateOn = 1; %Turns the animation on or off
 cfg.stepSize = 1000; %How large each major simulation step should be. Affects resolution of simulation "Truth" state
@@ -64,7 +67,14 @@ cfg.stepSize = 1000; %How large each major simulation step should be. Affects re
 
 %SPHERES states
 initStates = zeros(13, cfg.nSph);
-initStates(2,1) = -0.3;
+% SPHERE1: start on the circular path defined in gsp.c (t=0 -> X=+0.8, Z=0)
+initStates(1,1) = 0.8;  % X [m] (bound +/-0.8m)
+initStates(2,1) = 0;    % Y [m] (bound +/-0.2m)
+initStates(3,1) = 0;    % Z [m] (bound +/-0.8m)
+% SPHERE2: unchanged lateral offset from original config.
+% NOTE: SPHERE2's static target (X = -0.5, see gsp.c) sits inside SPHERE1's
+% circle (radius 0.8m). Consider moving SPHERE2 further away if you want to
+% avoid a close pass while SPHERE1 is circling.
 initStates(2,2) =  0.3;
 initStates(7,1:cfg.nSph) = 1; %Tank Down for both SPHERES
 cfg.initStates = initStates;
