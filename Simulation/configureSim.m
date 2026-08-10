@@ -10,7 +10,12 @@ dbstop(s);
 %% BUILD CONFIGURATION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % cfg.srcs    = ; % Adds sources for all satellites
-cfg.srcs = {};
+cfg.srcs = {'../common/trajectoryPlanner.c', '../common/trajectoryManagement.c'};
+% NOTE: the two lines above pull in the Stage 1 (planned trajectory) and
+% Stage 2 (trajectory management) source files added alongside gsp.c in the
+% common folder. If '../common/' isn't the correct relative path from this
+% Simulation folder to your common folder, adjust it to match your project
+% layout - otherwise you'll get the same "undefined reference" error again.
 cfg.srcs_sph{1} = {'../../../../SpheresCore/spheres_physical_ISS.c'}; % Adds sources to sphere 1 (same goes for sphere 2 or sphere 3)
 cfg.srcs_sph{2} = {'../../../../SpheresCore/spheres_physical_ISS_VERTIGO.c'};
 % Use this cell to add folders that should be on the compiler include path. Use the

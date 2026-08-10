@@ -49,21 +49,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "find_state_error.h"
 #include "ctrl_mix.h"
 #include <string.h>
-#include <math.h>
-
-/*----------------------------------------------------------------------------*/
-/* Circular trajectory parameters for SPHERE1                                 */
-/*                                                                            */
-/* SPHERE1 flies a circle in the X-Z plane (Y is held at 0, well inside the   */
-/* +/-0.2m bound). The circle has radius 0.8m along X and Z, matching the     */
-/* +/-0.8m bounds on those axes.                                             */
-/*----------------------------------------------------------------------------*/
-#define CIRCLE_RADIUS_X   0.8f      // [m] radius of travel along X
-#define CIRCLE_RADIUS_Z   0.8f      // [m] radius of travel along Z
-#define CIRCLE_CENTER_Y   0.0f      // [m] Y held here (within +/-0.2m bound)
-#define CIRCLE_PERIOD_MS  40000u    // [ms] time to complete one full revolution
-#define CIRCLE_NUM_REVS   2u        // number of revolutions to fly before ending test
-#define CIRCLE_TWO_PI     6.283185307f
+#include "trajectoryPlanner.h"
+#include "trajectoryManagement.h"
 
 void gspIdentitySet()
 {
@@ -153,17 +140,47 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 			break;
 		case 2:
 		{
-			// Angle swept since the start of this maneuver [rad].
-			// maneuver_time is in ms, so this ramps from 0 to
-			// CIRCLE_NUM_REVS full turns over CIRCLE_NUM_REVS*CIRCLE_PERIOD_MS ms.
-			float circle_angle = (CIRCLE_TWO_PI * (float)maneuver_time) / (float)CIRCLE_PERIOD_MS;
+			static trajectory_path_t plannedPath;   // Stage 1 output, built once
+			static unsigned char pathGenerated = 0;
+			unsigned char trajectoryComplete = 0;
+			unsigned char boundsExceeded = 0;
 
 			if (sysIdentityGet()==SPHERE1) {
+				float leaderPos[3];
+				unsigned int idx;
+
 				padsGlobalPeriodSet(SYS_FOREVER);
 
-				ctrlStateTarget[POS_X] = CIRCLE_RADIUS_X * cosf(circle_angle);
-				ctrlStateTarget[POS_Y] = CIRCLE_CENTER_Y;
-				ctrlStateTarget[POS_Z] = CIRCLE_RADIUS_Z * sinf(circle_angle);
+				// Stage 1: generate the planned trajectory once, the first
+				// time we enter this maneuver.
+				if (!pathGenerated) {
+					plannedTrajectoryGenerate(&plannedPath);
+					pathGenerated = 1;
+				}
+
+				// Current leader (SPHERE1) position, from the state estimator
+				leaderPos[0] = ctrlState[POS_X];
+				leaderPos[1] = ctrlState[POS_Y];
+				leaderPos[2] = ctrlState[POS_Z];
+
+				// Stage 2: trajectory management
+				trajectoryManagement(&plannedPath, leaderPos, &trajectoryComplete, &boundsExceeded);
+
+				if (boundsExceeded) {
+					// Planned path violates the workspace bounds: hold the
+					// current position rather than command further motion.
+					ctrlStateTarget[POS_X] = leaderPos[0];
+					ctrlStateTarget[POS_Y] = leaderPos[1];
+					ctrlStateTarget[POS_Z] = leaderPos[2];
+				} else {
+					idx = maneuver_time / TRAJ_CTRL_PERIOD_MS;
+					if (idx >= plannedPath.numPoints) {
+						idx = plannedPath.numPoints - 1;
+					}
+					ctrlStateTarget[POS_X] = plannedPath.pos[idx][0];
+					ctrlStateTarget[POS_Y] = plannedPath.pos[idx][1];
+					ctrlStateTarget[POS_Z] = plannedPath.pos[idx][2];
+				}
 			} else {
 				ctrlStateTarget[POS_X] = -0.5f;
 			}					
@@ -188,8 +205,19 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 			if (sysIdentityGet() == SPHERE1) {
 				padsGlobalPeriodSetAndWait(200,200);
 			}
-			if (maneuver_time >= (CIRCLE_PERIOD_MS * CIRCLE_NUM_REVS)) {
-				ctrlTestTerminate(TEST_RESULT_NORMAL);
+
+			// End the test once the leader's trajectory management stage
+			// reports completion (or a bounds violation). Followers, which
+			// don't run trajectory management themselves, fall back to the
+			// planned total duration.
+			if (sysIdentityGet() == SPHERE1) {
+				if (trajectoryComplete || boundsExceeded) {
+					ctrlTestTerminate(TEST_RESULT_NORMAL);
+				}
+			} else {
+				if (maneuver_time >= TRAJ_TOTAL_MS) {
+					ctrlTestTerminate(TEST_RESULT_NORMAL);
+				}
 			}
 			break;
 		}
