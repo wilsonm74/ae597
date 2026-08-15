@@ -51,6 +51,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <string.h>
 #include "trajectoryPlanner.h"
 #include "trajectoryManagement.h"
+#include "leaderPositionComm.h"
+#include "trackingError.h"
 
 void gspIdentitySet()
 {
@@ -181,8 +183,35 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 					ctrlStateTarget[POS_Y] = plannedPath.pos[idx][1];
 					ctrlStateTarget[POS_Z] = plannedPath.pos[idx][2];
 				}
+				// Broadcast our position so the viewer (SPHERE2) can compute
+				// its pointing error relative to us.
+				leaderPositionBroadcast(leaderPos);
+
 			} else {
+				float viewerPos[3];
+				float receivedLeaderPos[3];
+				float pointingErrorDeg;
+
 				ctrlStateTarget[POS_X] = -0.5f;
+
+				// Viewer (SPHERE2): compute pointing error toward the
+				// leader, using the most recently received leader position.
+				viewerPos[0] = ctrlState[POS_X];
+				viewerPos[1] = ctrlState[POS_Y];
+				viewerPos[2] = ctrlState[POS_Z];
+
+				if (leaderPositionGet(receivedLeaderPos)) {
+					// ctrlState[QUAT_1..QUAT_4] are contiguous floats, and
+					// (per the existing code's use of ctrlStateTarget[QUAT_1]
+					// = 1.0f for identity attitude) QUAT_1 is the scalar
+					// component - so this is scalar-first [qw,qx,qy,qz],
+					// matching calculateTrackingError()'s expected order.
+					pointingErrorDeg = calculateTrackingError(viewerPos, receivedLeaderPos,
+															   &ctrlState[QUAT_1]);
+					// pointingErrorDeg is available here for logging, or for
+					// driving a "point-at-leader" attitude controller later.
+					(void)pointingErrorDeg;
+				}
 			}					
 			ctrlStateTarget[QUAT_1] = 1.0f;
 			//find error
@@ -227,4 +256,5 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 
 void gspProcessRXData(default_rfm_packet packet)
 {
+	leaderPositionProcessPacket(packet);
 }
