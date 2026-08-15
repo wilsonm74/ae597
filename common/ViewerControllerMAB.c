@@ -14,7 +14,7 @@
 #include "spheres_types.h"
 #include "spheres_physical_parameters.h"
 
-
+extern const float KPattitudePD, KDattitudePD;
 
 /// @brief  
 ///
@@ -57,28 +57,28 @@ void SelectGains(float* gains, int maneuverNumber){
     switch (maneuverNumber)
     {
     case  1: // Acquisition
-        gains[0] = 1; // Replace with real values
-        gains[1] = 1; // Replace with real values
-        gains[2] = 1; // Replace with real values
-        gains[3] = 1; // Replace with real values
-        gains[4] = 1; // Replace with real values
-        gains[5] = 1; // Replace with real values
+        gains[0] = KPattitudePD; // 
+        gains[1] = KDattitudePD; //
+        gains[2] = KPattitudePD; // 
+        gains[3] = KPattitudePD; // 
+        gains[4] = KPattitudePD; // 
+        gains[5] = KPattitudePD; // 
         break;
 
     case 2: // Tracking 
-        gains[0] = 1; // Replace with real values
-        gains[1] = 1; // Replace with real values
-        gains[2] = 1; // Replace with real values
-        gains[3] = 1; // Replace with real values
-        gains[4] = 1; // Replace with real values
-        gains[5] = 1; // Replace with real values
+        gains[0] = KPattitudePD; // 
+        gains[1] = KDattitudePD; //
+        gains[2] = KPattitudePD; // 
+        gains[3] = KPattitudePD; // 
+        gains[4] = KPattitudePD; // 
+        gains[5] = KPattitudePD; // 
     default: // Have default use the initially provided values
-        gains[0] = 1; // Replace with real values
-        gains[1] = 1; // Replace with real values
-        gains[2] = 1; // Replace with real values
-        gains[3] = 1; // Replace with real values
-        gains[4] = 1; // Replace with real values
-        gains[5] = 1; // Replace with real values
+        gains[0] = KPattitudePD; // 
+        gains[1] = KDattitudePD; //
+        gains[2] = KPattitudePD; // 
+        gains[3] = KPattitudePD; // 
+        gains[4] = KPattitudePD; // 
+        gains[5] = KPattitudePD; // 
         break;
     }
 
