@@ -1,3 +1,4 @@
+//Author: Matthew Bennett
 
 //We need to be able to generate a set of thruster commands based on the
 //incoming trackingError.
