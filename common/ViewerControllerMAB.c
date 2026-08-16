@@ -13,6 +13,12 @@
 #include "gsp.h"
 #include "spheres_types.h"
 #include "spheres_physical_parameters.h"
+#include "ViewerControllerMAB.h"
+#include "ctrl_attitude.h"
+#include "ctrl_mix.h"
+#include "prop.h"
+#include "trackingError.h"
+
 
 extern const float KPattitudePD, KDattitudePD;
 
@@ -20,15 +26,17 @@ extern const float KPattitudePD, KDattitudePD;
 ///
 ///  Inputs:
 ///     Called from main: handles the needed calls to other functions to generate proper thrust commands to the viewer sphere
-void ViewerController(int maneuverNumber, state_vector trackingError){
+void ViewerController(int maneuverNumber, state_vector viewCurState, state_vector leadCurState, control_vector * viewControl){
 
     // Create arrays hope we won't need to alloc at any point
     float gains[6] = {0}; 
-    control_vector resultant_command;
-
-    // Determine proper gains
-    SelectGains(gains, maneuverNumber);
-
+    prop_time firing_times;
+    state_vector targetVector;
+    state_vector trackingError;
+    
+    SelectGains(gains, maneuverNumber);    // Determine proper gains based on maneuver number
+    GetTargetVector(viewCurState, leadCurState, targetVector); // Calculate the target vector
+    FindStateError(trackingError ,targetVector, viewCurState); // Calculate the state error between the target and current state
     
     
     // Call the provided controller function with selected gains
@@ -39,20 +47,14 @@ void ViewerController(int maneuverNumber, state_vector trackingError){
                         gains[4],
                         gains[5],
                         trackingError,
-                        resultant_command);
-
-    ctrlMixWLoc(); // Generate mix to get firing times
-    
-    propSetThrusterTimes();
-
-
+                        *viewControl);
 }
 
 /// @brief  
 ///
 ///  Inputs:
-///     float* gains used to pass gains back to viewerController when we call the 
-void SelectGains(float* gains, int maneuverNumber){
+///     
+void SelectGains(float gains[6], int maneuverNumber){
 
     switch (maneuverNumber)
     {
@@ -72,6 +74,7 @@ void SelectGains(float* gains, int maneuverNumber){
         gains[3] = KDattitudePD; // 
         gains[4] = KPattitudePD; // 
         gains[5] = KDattitudePD; // 
+        break;
     default: // Have default use the initially provided values
         gains[0] = KPattitudePD; // 
         gains[1] = KDattitudePD; //
