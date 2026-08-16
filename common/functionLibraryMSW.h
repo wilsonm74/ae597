@@ -9,6 +9,10 @@ void generateTrajectory(state_vector target, float acceleration[3], unsigned int
 
 void trajectoryPhase(float t_s, float period_s, float *phase, float *phase_rate, float *phase_accel);
 
+void trajectoryPhaseSimple(float t_s, float period_s, float *phase, float *phase_rate, float *phase_accel);
+
+void calculateLeaderControl(state_vector state, state_vector target, control_vector *control, float trajectory_acceleration[3]);
+
 state_vector trajectory_origin;
 
 #endif

@@ -15,6 +15,11 @@
 /* Mock external variables */
 const float VEHICLE_MOMENT_ARM = 0.1f;
 const float VEHICLE_THRUST_FORCE = 0.5f;
+const float VEHICLE_MASS = 4.43f;
+const float KPattitudePD = 0.0036f;
+const float KDattitudePD = 0.0180f;
+const float KPpositionPD = 0.0200f;
+const float KDpositionPD = 0.1880f;
 static unsigned int control_period_ms = 100;
 
 /* Mock function */
@@ -200,6 +205,43 @@ int testMixAndQuantizeSymmetry(void) {
     return result;
 }
 
+/* ==================== calculateLeaderControl Tests ==================== */
+
+int testLeaderControlCalculation(void) {
+    state_vector state = {0.0f};
+    state_vector target = {0.0f};
+    control_vector control = {0.0f};
+    float trajectory_acceleration[3] = {0.0f};
+    state[QUAT_4] = 1.0f;
+    target[QUAT_4] = 1.0f;
+    calculateLeaderControl(state, target, &control, trajectory_acceleration);
+    
+    /* Basic sanity check: control values should be finite */
+    int i;
+    for (i = 0; i < CONTROL_LENGTH; ++i) {
+        if (!isfinite(control[i])) {
+            return FAIL;
+        }
+    }
+    return PASS;
+}
+
+/* ====================== trajectoryPhaseSimple Tests ==================== */
+
+int testTrajectoryPhaseSimple(void) {
+    float phase, phase_rate, phase_accel;
+    float t_s = 10.0f;
+    float period_s = 120.0f;
+    float omega = 2.0f * 3.14159265f / period_s;
+    
+    trajectoryPhaseSimple(t_s, period_s, &phase, &phase_rate, &phase_accel);
+    
+    int result = floatEqual(phase, omega * t_s, TOLERANCE) &&
+                 floatEqual(phase_rate, omega, TOLERANCE) &&
+                 floatEqual(phase_accel, 0.0f, TOLERANCE);
+    return result;
+}
+
 /* ==================== Test Runner ==================== */
 
 int main(void) {
@@ -261,6 +303,14 @@ int main(void) {
         failed++;
     }
     
+    if (testMixAndQuantizeSymmetry() == PASS) {
+        printf("testMixAndQuantizeSymmetry: PASS\n");
+        passed++;
+    } else {
+        printf("testMixAndQuantizeSymmetry: FAIL\n");
+        failed++;
+    }
+    
     if (testMixAndQuantizeSmallControl() == PASS) {
         printf("testMixAndQuantizeSmallControl: PASS\n");
         passed++;
@@ -277,11 +327,21 @@ int main(void) {
         failed++;
     }
     
-    if (testMixAndQuantizeSymmetry() == PASS) {
-        printf("testMixAndQuantizeSymmetry: PASS\n");
+    if (testTrajectoryPhaseSimple() == PASS) {
+        printf("testTrajectoryPhaseSimple: PASS\n");
         passed++;
     } else {
-        printf("testMixAndQuantizeSymmetry: FAIL\n");
+        printf("testTrajectoryPhaseSimple: FAIL\n");
+        failed++;
+    }
+
+    printf("\n--- leaderControlCalculation Tests ---\n");
+
+    if (testLeaderControlCalculation() == PASS) {
+        printf("testLeaderControlCalculation: PASS\n");
+        passed++;
+    } else {
+        printf("testLeaderControlCalculation: FAIL\n");
         failed++;
     }
     

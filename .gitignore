@@ -9,6 +9,7 @@ Makefile
 *.dll
 *.dll.a
 *.mat
+*.csv
 *.pjt
 *.asv
 *.sh

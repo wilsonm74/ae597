@@ -4,6 +4,9 @@
 #include "spheres_constants.h"
 #include <math.h>
 #include <string.h>
+#include "find_state_error.h"
+#include "ctrl_attitude.h"
+#include "ctrl_position.h"
 
 #define MIXER_DUTY_CYCLE_PERCENT 20.0f
 #define MINIMUM_PULSE_MS 10
@@ -11,6 +14,8 @@
 #define CIRCLE_RADIUS_M 0.18f
 #define TRAJECTORY_RAMP_S 15.0f
 #define TWO_PI_F 6.283185307179586476925286766559f
+
+extern const float KPattitudePD, KDattitudePD, KPpositionPD, KDpositionPD, VEHICLE_MASS;
 
 void trajectoryMixAndQuantize(prop_time *firing_times, float control[6],
     float state[13], float pulse_demand_ms[12])
@@ -138,4 +143,39 @@ void trajectoryPhase(float t_s, float period_s, float *phase, float *phase_rate,
 	}
 }
 
+void trajectoryPhaseSimple(float t_s, float period_s, float *phase, float *phase_rate, float *phase_accel) {
+	
+	float omega = TWO_PI_F / period_s;
+	if (t_s < TRAJECTORY_RAMP_S) {
+		/* Linearly ramp the phase acceleration from zero to omega. */
+		*phase_accel = 2.0f * omega * t_s / TRAJECTORY_RAMP_S;
+		*phase_rate = omega * t_s * t_s / TRAJECTORY_RAMP_S;
+		*phase = omega * t_s * t_s * t_s / (3.0f * TRAJECTORY_RAMP_S * TRAJECTORY_RAMP_S);
+	} else {
+		*phase = omega * (t_s - TRAJECTORY_RAMP_S / 3.0f);
+		*phase_rate = omega;
+		*phase_accel = 0.0f;
+	}
+
+}
+
+void calculateLeaderControl(state_vector state, state_vector target, control_vector *control, float trajectory_acceleration[3])
+{
+	state_vector error;
+	findStateError(error, state, target);
+
+	ctrlPositionPDgains(KPpositionPD, KDpositionPD,
+		KPpositionPD, KDpositionPD,
+		KPpositionPD, KDpositionPD, error, *control);
+
+	(*control)[FORCE_X] += VEHICLE_MASS * trajectory_acceleration[0];
+	(*control)[FORCE_Y] += VEHICLE_MASS * trajectory_acceleration[1];
+	(*control)[FORCE_Z] += VEHICLE_MASS * trajectory_acceleration[2];
+
+	ctrlAttitudeNLPDwie(KPattitudePD, KDattitudePD,
+		KPattitudePD,KDattitudePD,
+		KPattitudePD,KDattitudePD,
+		error, *control);
+
+}
 
