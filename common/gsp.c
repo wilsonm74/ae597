@@ -92,7 +92,7 @@ void gspInitTest(unsigned int test_number)
 	} else {
 		padsEstimatorInitWaitAndSet(initState, 50, SYS_FOREVER, SYS_FOREVER, PADS_INIT_THRUST_INT_ENABLE,PADS_BEACONS_SET_1TO9); // ISS
 	}
-	ctrlPeriodSet(1000);
+	ctrlPeriodSet(100);
 }
 
 
@@ -121,11 +121,15 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 	state_vector ctrlState;
 	state_vector ctrlStateTarget;
 	state_vector ctrlStateError;
+	float acceleration[3] = {0.0f, 0.0f, 0.0f};
 	float ctrlControl[6];
 	prop_time firing_times;
 	const int min_pulse = 10;
 
-	extern const float KPattitudePD, KDattitudePD, KPpositionPD, KDpositionPD;
+	static unsigned int next_log_time = 0;
+	int metrology_cycle = 0;
+
+	extern const float KPattitudePD, KDattitudePD, KPpositionPD, KDpositionPD, VEHICLE_MASS;
 
 	//Clear all uninitialized vectors
 	memset(ctrlControl,0,sizeof(float)*6);
@@ -151,6 +155,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 				float leaderPos[3];
 				unsigned int idx;
 
+				metrology_cycle = (maneuver_time % 1000U) < ctrlPeriodGet();
 				padsGlobalPeriodSet(SYS_FOREVER);
 
 				// Stage 1: generate the planned trajectory once, the first
@@ -182,6 +187,24 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 					ctrlStateTarget[POS_X] = plannedPath.pos[idx][0];
 					ctrlStateTarget[POS_Y] = plannedPath.pos[idx][1];
 					ctrlStateTarget[POS_Z] = plannedPath.pos[idx][2];
+
+					#if (0)
+						if (idx > 0 && idx < plannedPath.numPoints - 1) {
+							float dt = (float)TRAJ_CTRL_PERIOD_MS / 1000.0f;
+							for (int jdx = 0; jdx < 3; jdx++) {
+								acceleration[jdx] = (plannedPath.pos[idx+1][jdx] - 2*plannedPath.pos[idx][jdx] + plannedPath.pos[idx-1][jdx]) / (dt * dt);
+								}
+						}
+						else {
+							acceleration[0] = 0.0f;
+							acceleration[1] = 0.0f;
+							acceleration[2] = 0.0f;
+						}
+					#else
+						acceleration[0] = plannedPath.accel[idx][0];
+						acceleration[1] = plannedPath.accel[idx][1];
+						acceleration[2] = plannedPath.accel[idx][2];
+					#endif
 				}
 				// Broadcast our position so the viewer (SPHERE2) can compute
 				// its pointing error relative to us.
@@ -217,6 +240,10 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 			//find error
 			findStateError(ctrlStateError,ctrlState,ctrlStateTarget);
 			//call controllers
+			// feedforward acceleration compoent
+			ctrlControl[FORCE_X] += acceleration[0] * VEHICLE_MASS;
+			ctrlControl[FORCE_Y] += acceleration[1] * VEHICLE_MASS;
+			ctrlControl[FORCE_Z] += acceleration[2] * VEHICLE_MASS;
 			ctrlPositionPDgains(KPpositionPD, KDpositionPD, 
 								KPpositionPD, KDpositionPD, 
 								KPpositionPD, KDpositionPD, ctrlStateError, ctrlControl);
@@ -227,12 +254,39 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 
 			//mix forces/torques into thruster commands
 			ctrlMixWLoc(&firing_times, ctrlControl, ctrlState, min_pulse, 20.0f, FORCE_FRAME_INERTIAL);
+
+			if (metrology_cycle) {
+				memset(&firing_times, 0, sizeof(prop_time));
+			}
 			
 			//Set firing times
 			propSetThrusterTimes(&firing_times);
 
-			if (sysIdentityGet() == SPHERE1) {
-				padsGlobalPeriodSetAndWait(200,200);
+			if (test_time >= next_log_time) {
+				float debug_values[8] = {0};
+				debug_values[0] = (float)maneuver_time / 1000.0f;
+				debug_values[1] = (float)boundsExceeded;
+				debug_values[2] = (float)ctrlStateTarget[POS_X];
+				debug_values[3] = (float)ctrlStateTarget[POS_Y];
+				debug_values[4] = (float)ctrlStateTarget[POS_Z];
+				debug_values[5] = (float)ctrlControl[FORCE_X];
+				debug_values[6] = (float)ctrlControl[FORCE_Y];
+				debug_values[7] = (float)ctrlControl[FORCE_Z];
+
+				commSendPacket(
+					COMM_CHANNEL_STL,
+					GROUND,
+					sysIdentityGet(),
+					COMM_CMD_DBG_FLOAT,
+					(unsigned char *)debug_values,
+					0
+				);
+
+				next_log_time = test_time + 1000U;
+			}
+
+			if (metrology_cycle && sysIdentityGet() == SPHERE1) {
+				padsGlobalPeriodSetAndWait(1000,0);
 			}
 
 			// End the test once the leader's trajectory management stage

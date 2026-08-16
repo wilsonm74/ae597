@@ -22,8 +22,8 @@
 #define CIRCLE_RADIUS_X   0.8f      // [m] radius of travel along X
 #define CIRCLE_RADIUS_Z   0.8f      // [m] radius of travel along Z
 #define CIRCLE_CENTER_Y   0.0f      // [m] Y held here (within +/-0.2m bound)
-#define CIRCLE_PERIOD_MS  40000u    // [ms] time to complete one full revolution
-#define CIRCLE_NUM_REVS   2u        // number of revolutions to fly before ending test
+#define CIRCLE_PERIOD_MS  160000u    // [ms] time to complete one full revolution
+#define CIRCLE_NUM_REVS   1u        // number of revolutions to fly before ending test
 #define CIRCLE_TWO_PI     6.283185307f
 
 /* One planned-trajectory waypoint is generated per control cycle */
@@ -36,6 +36,7 @@
    Management stage. */
 typedef struct {
 	float pos[TRAJ_NUM_POINTS][3];   // planned [X,Y,Z] waypoints, in order
+	float accel[TRAJ_NUM_POINTS][3]; // planned [X,Y,Z] accelerations, in order
 	unsigned int numPoints;          // number of valid waypoints in pos[]
 } trajectory_path_t;
 
