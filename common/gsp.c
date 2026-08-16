@@ -49,7 +49,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "find_state_error.h"
 #include "ctrl_mix.h"
 #include <string.h>
-
+#include "trajectoryPlanner.h"
+#include "trajectoryManagement.h"
+#include "leaderPositionComm.h"
+#include "trackingError.h"
 #include "functionLibraryMSW.h"
 
 #define MINIMUM_PULSE_MS 10
@@ -87,7 +90,7 @@ void gspInitProgram()
 void gspInitTest(unsigned int test_number)
 {
 	extern state_vector initState;
-    memcopy(trajectory_origin, initState, sizeof(state_vector));
+    memcpy(trajectory_origin, initState, sizeof(state_vector));
 	if (sysIdentityGet() == SPHERE1){
 		padsEstimatorInitWaitAndSet(initState, 50, 200, 105, PADS_INIT_THRUST_INT_ENABLE,PADS_BEACONS_SET_1TO9); // ISS
 	} else {
@@ -145,12 +148,80 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 			}
 			break;
 		case 2:
+		{
+			static trajectory_path_t plannedPath;   // Stage 1 output, built once
+			static unsigned char pathGenerated = 0;
+			unsigned char trajectoryComplete = 0;
+			unsigned char boundsExceeded = 0;
+
 			if (sysIdentityGet()==SPHERE1) {
+				float leaderPos[3];
+				unsigned int idx;
+
+				padsGlobalPeriodSet(SYS_FOREVER);
+
+				// Stage 1: generate the planned trajectory once, the first
+				// time we enter this maneuver.
+				if (!pathGenerated) {
+					plannedTrajectoryGenerate(&plannedPath);
+					pathGenerated = 1;
+				}
+
+				// Current leader (SPHERE1) position, from the state estimator
+				leaderPos[0] = ctrlState[POS_X];
+				leaderPos[1] = ctrlState[POS_Y];
+				leaderPos[2] = ctrlState[POS_Z];
+
+				// Stage 2: trajectory management
+				trajectoryManagement(&plannedPath, leaderPos, &trajectoryComplete, &boundsExceeded);
+
+				if (boundsExceeded) {
+					// Planned path violates the workspace bounds: hold the
+					// current position rather than command further motion.
+					ctrlStateTarget[POS_X] = leaderPos[0];
+					ctrlStateTarget[POS_Y] = leaderPos[1];
+					ctrlStateTarget[POS_Z] = leaderPos[2];
+				} else {
+					idx = maneuver_time / TRAJ_CTRL_PERIOD_MS;
+					if (idx >= plannedPath.numPoints) {
+						idx = plannedPath.numPoints - 1;
+					}
+					ctrlStateTarget[POS_X] = plannedPath.pos[idx][0];
+					ctrlStateTarget[POS_Y] = plannedPath.pos[idx][1];
+					ctrlStateTarget[POS_Z] = plannedPath.pos[idx][2];
+				}
+				// Broadcast our position so the viewer (SPHERE2) can compute
+				// its pointing error relative to us.
+				leaderPositionBroadcast(leaderPos);
+
                 metrology_cycle = ((maneuver_time % 1000U) < ctrlPeriodGet());
 				padsGlobalPeriodSet(SYS_FOREVER);				
-				ctrlStateTarget[POS_X] = 0.3f;
+
 			} else {
+				float viewerPos[3];
+				float receivedLeaderPos[3];
+				float pointingErrorDeg;
+
 				ctrlStateTarget[POS_X] = -0.5f;
+
+				// Viewer (SPHERE2): compute pointing error toward the
+				// leader, using the most recently received leader position.
+				viewerPos[0] = ctrlState[POS_X];
+				viewerPos[1] = ctrlState[POS_Y];
+				viewerPos[2] = ctrlState[POS_Z];
+
+				if (leaderPositionGet(receivedLeaderPos)) {
+					// ctrlState[QUAT_1..QUAT_4] are contiguous floats, and
+					// (per the existing code's use of ctrlStateTarget[QUAT_1]
+					// = 1.0f for identity attitude) QUAT_1 is the scalar
+					// component - so this is scalar-first [qw,qx,qy,qz],
+					// matching calculateTrackingError()'s expected order.
+					pointingErrorDeg = calculateTrackingError(viewerPos, receivedLeaderPos,
+															   &ctrlState[QUAT_1]);
+					// pointingErrorDeg is available here for logging, or for
+					// driving a "point-at-leader" attitude controller later.
+					(void)pointingErrorDeg;
+				}
 			}					
 			ctrlStateTarget[QUAT_1] = 1.0f;
 			//find error
@@ -184,14 +255,27 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 			if (metrology_cycle && sysIdentityGet() == SPHERE1) {
 				padsGlobalPeriodSetAndWait(1000,0);
 			}
-			if (maneuver_time>=60000) {
-				ctrlTestTerminate(TEST_RESULT_NORMAL);
+
+			// End the test once the leader's trajectory management stage
+			// reports completion (or a bounds violation). Followers, which
+			// don't run trajectory management themselves, fall back to the
+			// planned total duration.
+			if (sysIdentityGet() == SPHERE1) {
+				if (trajectoryComplete || boundsExceeded) {
+					ctrlTestTerminate(TEST_RESULT_NORMAL);
+				}
+			} else {
+				if (maneuver_time >= TRAJ_TOTAL_MS) {
+					ctrlTestTerminate(TEST_RESULT_NORMAL);
+				}
 			}
 			break;
+		}
 	}
 }
 
 
 void gspProcessRXData(default_rfm_packet packet)
 {
+	leaderPositionProcessPacket(packet);
 }
