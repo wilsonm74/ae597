@@ -134,9 +134,6 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 
 	static unsigned int next_log_time = 0;
 
-
-	static unsigned int next_log_time = 0;
-
 	extern const float KPattitudePD, KDattitudePD, KPpositionPD, KDpositionPD, VEHICLE_MASS;
 
 	//Clear all uninitialized vectors
@@ -266,8 +263,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 
 			//mix forces/torques into thruster commands
 			// ctrlMixWLoc(&firing_times, ctrlControl, ctrlState, min_pulse, 20.0f, FORCE_FRAME_INERTIAL);
-            trajectoryMixAndQuantize(&firing_times, ctrlControl, ctrlState,
-				pulse_demand_ms);
+            trajectoryMixAndQuantize(&firing_times, ctrlControl, ctrlState, pulse_demand_ms);
 			
             if (metrology_cycle) {
                 memset(&firing_times, 0, sizeof(prop_time));

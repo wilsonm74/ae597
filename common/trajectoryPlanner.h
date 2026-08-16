@@ -19,15 +19,15 @@
 /* +/-0.2m bound). The circle has radius 0.8m along X and Z, matching the     */
 /* +/-0.8m bounds on those axes.                                             */
 /*----------------------------------------------------------------------------*/
-#define CIRCLE_RADIUS_X   0.8f      // [m] radius of travel along X
-#define CIRCLE_RADIUS_Z   0.8f      // [m] radius of travel along Z
+#define CIRCLE_RADIUS_X   0.4f      // [m] radius of travel along X
+#define CIRCLE_RADIUS_Z   0.4f      // [m] radius of travel along Z
 #define CIRCLE_CENTER_Y   0.0f      // [m] Y held here (within +/-0.2m bound)
-#define CIRCLE_PERIOD_MS  160000u    // [ms] time to complete one full revolution
+#define CIRCLE_PERIOD_MS  600000u    // [ms] time to complete one full revolution
 #define CIRCLE_NUM_REVS   1u        // number of revolutions to fly before ending test
 #define CIRCLE_TWO_PI     6.283185307f
 
 /* One planned-trajectory waypoint is generated per control cycle */
-#define TRAJ_CTRL_PERIOD_MS 1000u
+#define TRAJ_CTRL_PERIOD_MS 100u
 #define TRAJ_TOTAL_MS        (CIRCLE_PERIOD_MS * CIRCLE_NUM_REVS)
 #define TRAJ_NUM_POINTS      ((TRAJ_TOTAL_MS / TRAJ_CTRL_PERIOD_MS) + 1u)
 

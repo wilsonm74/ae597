@@ -58,16 +58,21 @@ nexttile
 plot(traj_t, debug_float(3:5,:))
 
 figure(4)
-tiledlayout(1,1)
+tiledlayout(2,1)
 
-nexttile
+ax(1) = nexttile;
 plot(t_s, state(1:3,:), '--');
 hold on
-ax = gca;
-ax.ColorOrderIndex = 1;
+ax(1).ColorOrderIndex = 1;
 plot(traj_t, traj)
 hold off
 
+traj_rs = interp1(traj_t, traj.', t_s).';
+
+ax(2) = nexttile;
+plot(t_s, abs(traj_rs-state(1:3,:)));
+
+linkaxes(ax, 'x')
 
 function debugFloat = getDebugFloatTelemetry(completedCfg, sphereIndex)
     sphereData = completedCfg.data{1, sphereIndex};
