@@ -60,25 +60,25 @@ void SelectGains(float* gains, int maneuverNumber){
         gains[0] = KPattitudePD; // 
         gains[1] = KDattitudePD; //
         gains[2] = KPattitudePD; // 
-        gains[3] = KPattitudePD; // 
+        gains[3] = KDattitudePD; // 
         gains[4] = KPattitudePD; // 
-        gains[5] = KPattitudePD; // 
+        gains[5] = KDattitudePD; // 
         break;
 
     case 2: // Tracking 
         gains[0] = KPattitudePD; // 
         gains[1] = KDattitudePD; //
         gains[2] = KPattitudePD; // 
-        gains[3] = KPattitudePD; // 
+        gains[3] = KDattitudePD; // 
         gains[4] = KPattitudePD; // 
-        gains[5] = KPattitudePD; // 
+        gains[5] = KDattitudePD; // 
     default: // Have default use the initially provided values
         gains[0] = KPattitudePD; // 
         gains[1] = KDattitudePD; //
         gains[2] = KPattitudePD; // 
-        gains[3] = KPattitudePD; // 
+        gains[3] = KDattitudePD; // 
         gains[4] = KPattitudePD; // 
-        gains[5] = KPattitudePD; // 
+        gains[5] = KDattitudePD; // 
         break;
     }
 
