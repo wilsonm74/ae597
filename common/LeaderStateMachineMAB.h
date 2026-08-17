@@ -1,5 +1,5 @@
 #include "spheres_types.h"
 
-void UpdatLeaderStateMachine(float trackingError);
+void UpdateLeaderStateMachine(int maneuverNumber);
 
-int CheckStateMachine(int newManeuver);
+int CheckStateMachine();

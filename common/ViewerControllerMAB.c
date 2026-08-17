@@ -18,6 +18,7 @@
 #include "ctrl_mix.h"
 #include "prop.h"
 #include "trackingError.h"
+#include "find_state_error.h"
 
 
 extern const float KPattitudePD, KDattitudePD;

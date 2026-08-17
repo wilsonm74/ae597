@@ -10,7 +10,7 @@ dbstop(s);
 %% BUILD CONFIGURATION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % cfg.srcs    = ; % Adds sources for all satellites
-cfg.srcs = {'../common/trajectoryPlanner.c', '../common/trajectoryManagement.c'};
+cfg.srcs = {'../common/trajectoryPlanner.c', '../common/trajectoryManagement.c', '../../../../SpheresCore/Utilities/math_quat.c'};
 % NOTE: the two lines above pull in the Stage 1 (planned trajectory) and
 % Stage 2 (trajectory management) source files added alongside gsp.c in the
 % common folder. If '../common/' isn't the correct relative path from this
@@ -80,9 +80,9 @@ initStates(3,1) = 0;    % Z [m] (bound +/-0.8m)
 % NOTE: SPHERE2's static target (X = -0.5, see gsp.c) sits inside SPHERE1's
 % circle (radius 0.8m). Consider moving SPHERE2 further away if you want to
 % avoid a close pass while SPHERE1 is circling.
-initStates(2,1) =  0.0;
+initStates(1,2) =  0.0;
 initStates(2,2) =  -0.3;
-initStates(2,3) =  0.0;
+initStates(3,2) =  0.0;
 initStates(7,1:cfg.nSph) = 1; %Tank Down for both SPHERES
 cfg.initStates = initStates;
 

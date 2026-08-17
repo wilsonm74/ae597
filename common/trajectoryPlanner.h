@@ -21,7 +21,7 @@
 /*----------------------------------------------------------------------------*/
 #define CIRCLE_RADIUS_X   0.6f      // [m] radius of travel along X
 #define CIRCLE_RADIUS_Z   0.6f      // [m] radius of travel along Z
-#define CIRCLE_CENTER_Y   0.0f      // [m] Y held here (within +/-0.2m bound)
+#define CIRCLE_CENTER_Y   0.3f      // [m] Y held here (within +/-0.2m bound)
 #define CIRCLE_PERIOD_S   600.0f    // [s] time to complete one full revolution
 #define CIRCLE_PERIOD_MS  600000u    // [ms] time to complete one full revolution
 #define CIRCLE_NUM_REVS   1u        // number of revolutions to fly before ending test

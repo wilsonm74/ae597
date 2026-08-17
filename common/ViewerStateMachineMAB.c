@@ -11,6 +11,7 @@
 #include "spheres_types.h"
 #include "spheres_physical_parameters.h"
 #include "math.h"
+#include "LeaderStateMachineMAB.h"
 
 //create a static variable to track the state
 static int viewerCurrentState = 1;
@@ -18,7 +19,7 @@ static int acquisitionThreshold = 5;
 
 /// @brief Takes in the current tracking error and updates the viewer state after acquisition
 /// @param trackingError 
-void UpdatViewerStateMachine(float trackingError){
+void UpdateViewerStateMachine(float trackingError){
     if(viewerCurrentState == 1 && abs(trackingError) < acquisitionThreshold){  
         viewerCurrentState = 2;
         UpdateLeaderStateMachine(viewerCurrentState); //Update the leader to begin trajectory

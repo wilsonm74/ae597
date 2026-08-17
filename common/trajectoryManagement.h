@@ -16,7 +16,7 @@
 
 /* Workspace limits (given test-volume bounds) */
 #define BOUND_X 0.8f   // [m] +/- limit on X
-#define BOUND_Y 0.2f   // [m] +/- limit on Y
+#define BOUND_Y 1.2f   // [m] +/- limit on Y
 #define BOUND_Z 0.8f   // [m] +/- limit on Z
 
 #define TRAJ_COMPLETE_TOLERANCE 0.05f
