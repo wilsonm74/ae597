@@ -19,9 +19,10 @@
 /* +/-0.2m bound). The circle has radius 0.8m along X and Z, matching the     */
 /* +/-0.8m bounds on those axes.                                             */
 /*----------------------------------------------------------------------------*/
-#define CIRCLE_RADIUS_X   0.4f      // [m] radius of travel along X
-#define CIRCLE_RADIUS_Z   0.4f      // [m] radius of travel along Z
+#define CIRCLE_RADIUS_X   0.6f      // [m] radius of travel along X
+#define CIRCLE_RADIUS_Z   0.6f      // [m] radius of travel along Z
 #define CIRCLE_CENTER_Y   0.0f      // [m] Y held here (within +/-0.2m bound)
+#define CIRCLE_PERIOD_S   600.0f    // [s] time to complete one full revolution
 #define CIRCLE_PERIOD_MS  600000u    // [ms] time to complete one full revolution
 #define CIRCLE_NUM_REVS   1u        // number of revolutions to fly before ending test
 #define CIRCLE_TWO_PI     6.283185307f
@@ -37,6 +38,7 @@
 typedef struct {
 	float pos[TRAJ_NUM_POINTS][3];   // planned [X,Y,Z] waypoints, in order
 	float accel[TRAJ_NUM_POINTS][3]; // planned [X,Y,Z] accelerations, in order
+	float vel[TRAJ_NUM_POINTS][3];   // planned [X,Y,Z] velocities, in order
 	unsigned int numPoints;          // number of valid waypoints in pos[]
 } trajectory_path_t;
 

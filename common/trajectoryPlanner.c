@@ -24,6 +24,10 @@ void plannedTrajectoryGenerate(trajectory_path_t *path)
 		path->pos[i][1] = CIRCLE_CENTER_Y;                // Y
 		path->pos[i][2] = CIRCLE_RADIUS_Z * sinf(angle);  // Z
 
+		path->vel[i][0] = -CIRCLE_RADIUS_X * omega * sinf(angle);  // X
+		path->vel[i][1] = 0.0f;                                                                                                     // Y
+		path->vel[i][2] = CIRCLE_RADIUS_Z * omega * cosf(angle);  // Z
+
 		path->accel[i][0] = -CIRCLE_RADIUS_X * omega * omega * cosf(angle);  // X
 		path->accel[i][1] = 0.0f;                                                                                                     // Y
 		path->accel[i][2] = -CIRCLE_RADIUS_Z * omega * omega * sinf(angle);  // Z

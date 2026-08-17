@@ -186,6 +186,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 					ctrlStateTarget[POS_Z] = leaderPos[2];
 				} else {
 					idx = maneuver_time / TRAJ_CTRL_PERIOD_MS;
+					// if 
 					if (idx >= plannedPath.numPoints) {
 						idx = plannedPath.numPoints - 1;
 					}
@@ -193,23 +194,13 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 					ctrlStateTarget[POS_Y] = plannedPath.pos[idx][1];
 					ctrlStateTarget[POS_Z] = plannedPath.pos[idx][2];
 
-					#if (0)
-						if (idx > 0 && idx < plannedPath.numPoints - 1) {
-							float dt = (float)TRAJ_CTRL_PERIOD_MS / 1000.0f;
-							for (int jdx = 0; jdx < 3; jdx++) {
-								acceleration[jdx] = (plannedPath.pos[idx+1][jdx] - 2*plannedPath.pos[idx][jdx] + plannedPath.pos[idx-1][jdx]) / (dt * dt);
-								}
-						}
-						else {
-							acceleration[0] = 0.0f;
-							acceleration[1] = 0.0f;
-							acceleration[2] = 0.0f;
-						}
-					#else
-						acceleration[0] = plannedPath.accel[idx][0];
-						acceleration[1] = plannedPath.accel[idx][1];
-						acceleration[2] = plannedPath.accel[idx][2];
-					#endif
+					ctrlStateTarget[VEL_X] = plannedPath.vel[idx][0];
+					ctrlStateTarget[VEL_Y] = plannedPath.vel[idx][1];
+					ctrlStateTarget[VEL_Z] = plannedPath.vel[idx][2];
+
+					acceleration[0] = plannedPath.accel[idx][0];
+					acceleration[1] = plannedPath.accel[idx][1];
+					acceleration[2] = plannedPath.accel[idx][2];
 				}
 				// Broadcast our position so the viewer (SPHERE2) can compute
 				// its pointing error relative to us.
@@ -274,7 +265,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 
 			if (test_time >= next_log_time) {
 				float debug_values[8] = {0};
-				debug_values[0] = (float)maneuver_time / 1000.0f;
+				debug_values[0] = (float)test_time / 1000.0f;
 				debug_values[1] = (float)boundsExceeded;
 				debug_values[2] = (float)ctrlStateTarget[POS_X];
 				debug_values[3] = (float)ctrlStateTarget[POS_Y];
@@ -308,7 +299,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 					ctrlTestTerminate(TEST_RESULT_NORMAL);
 				}
 			} else {
-				if (maneuver_time >= TRAJ_TOTAL_MS) {
+				if (test_time >= TRAJ_TOTAL_MS) {
 					ctrlTestTerminate(TEST_RESULT_NORMAL);
 				}
 			}

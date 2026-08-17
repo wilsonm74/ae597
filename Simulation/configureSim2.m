@@ -73,7 +73,7 @@ cfg.stepSize = 1000; %How large each major simulation step should be. Affects re
 %SPHERES states
 initStates = zeros(13, cfg.nSph);
 % SPHERE1: start on the circular path defined in gsp.c (t=0 -> X=+0.8, Z=0)
-initStates(1,1) = 0.4;  % X [m] (bound +/-0.8m)
+initStates(1,1) = 0.6;  % X [m] (bound +/-0.8m)
 initStates(2,1) = 0;    % Y [m] (bound +/-0.2m)
 initStates(3,1) = 0;    % Z [m] (bound +/-0.8m)
 % SPHERE2: unchanged lateral offset from original config.
