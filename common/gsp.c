@@ -66,24 +66,24 @@ void gspIdentitySet()
 
 void gspInitProgram()
 {
-   // set the unique program identifier (to be assigned by MIT)
-   sysProgramIDSet(2110);
+	// set the unique program identifier (to be assigned by MIT)
+	sysProgramIDSet(2110);
 
-   // set up communications TDMA frames
-   commTdmaStandardInit(COMM_CHANNEL_STL, sysIdentityGet(), NUM_SPHERES);
-   commTdmaStandardInit(COMM_CHANNEL_STS, sysIdentityGet(), NUM_SPHERES);
+	// set up communications TDMA frames
+	commTdmaStandardInit(COMM_CHANNEL_STL, sysIdentityGet(), NUM_SPHERES);
+	commTdmaStandardInit(COMM_CHANNEL_STS, sysIdentityGet(), NUM_SPHERES);
 
-   // enable communications channels
-   commTdmaEnable(COMM_CHANNEL_STL);
-   commTdmaEnable(COMM_CHANNEL_STS);   
-   
-   // allocate storage space for IMU samples
-   padsInertialAllocateBuffers(50);
+	// enable communications channels
+	commTdmaEnable(COMM_CHANNEL_STL);
+	commTdmaEnable(COMM_CHANNEL_STS);   
 
-   // inform system of highest beacon number in use
-   padsInitializeFPGA(NUM_BEACONS);
+	// allocate storage space for IMU samples
+	padsInertialAllocateBuffers(50);
 
-   /* custom program initialization goes below this point */
+	// inform system of highest beacon number in use
+	padsInitializeFPGA(NUM_BEACONS);
+
+	/* custom program initialization goes below this point */
 }
 
 
@@ -209,7 +209,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 				metrology_cycle = ((maneuver_time % 1000U) < ctrlPeriodGet());
 				padsGlobalPeriodSet(SYS_FOREVER);				
 
-			} else {
+			} else if (sysIdentityGet()==SPHERE2) {
 				float viewerPos[3];
 				float receivedLeaderPos[3];
 				float pointingErrorDeg;

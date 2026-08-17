@@ -74,13 +74,15 @@ cfg.stepSize = 1000; %How large each major simulation step should be. Affects re
 initStates = zeros(13, cfg.nSph);
 % SPHERE1: start on the circular path defined in gsp.c (t=0 -> X=+0.8, Z=0)
 initStates(1,1) = 0.6;  % X [m] (bound +/-0.8m)
-initStates(2,1) = 0;    % Y [m] (bound +/-0.2m)
+initStates(2,1) = 0.3;    % Y [m] (bound +/-0.2m)
 initStates(3,1) = 0;    % Z [m] (bound +/-0.8m)
 % SPHERE2: unchanged lateral offset from original config.
 % NOTE: SPHERE2's static target (X = -0.5, see gsp.c) sits inside SPHERE1's
 % circle (radius 0.8m). Consider moving SPHERE2 further away if you want to
 % avoid a close pass while SPHERE1 is circling.
-initStates(2,2) =  0.3;
+initStates(2,1) =  0.0;
+initStates(2,2) =  -0.3;
+initStates(2,3) =  0.0;
 initStates(7,1:cfg.nSph) = 1; %Tank Down for both SPHERES
 cfg.initStates = initStates;
 
