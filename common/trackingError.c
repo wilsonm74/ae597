@@ -5,8 +5,9 @@
  */
 
 #include "trackingError.h"
+#include "math_quat.h"
 #include <math.h>
-
+#include "spheres_constants.h"
 #define RAD_TO_DEG 57.29577951f
 
 float calculateTrackingError(const float viewerPos[3], const float leaderPos[3],
@@ -59,3 +60,80 @@ float calculateTrackingError(const float viewerPos[3], const float leaderPos[3],
 
 	return acosf(dot) * RAD_TO_DEG;
 }
+
+void GetTargetQuat(const float viewerPos[3], const float leaderPos[3],
+								   float targetQuat[4])
+{
+	float los[3];
+	float losNorm;
+	float lHat[3];
+	float bodyXAxis[3] = {1.0f, 0.0f, 0.0f};
+
+	// l_hat = (p_leader - p_viewer) / || p_leader - p_viewer ||
+	los[0] = leaderPos[0] - viewerPos[0];
+	los[1] = leaderPos[1] - viewerPos[1];
+	los[2] = leaderPos[2] - viewerPos[2];
+
+	losNorm = sqrtf(los[0]*los[0] + los[1]*los[1] + los[2]*los[2]);
+
+	if (losNorm < 1e-6f) {
+		// Viewer and leader are at same position, return identity quaternion
+		targetQuat[0] = 0.0f;
+		targetQuat[1] = 0.0f;
+		targetQuat[2] = 0.0f;
+		targetQuat[3] = 1.0f;
+		return;
+	}
+
+	// Normalize line-of-sight
+	lHat[0] = los[0] / losNorm;
+	lHat[1] = los[1] / losNorm;
+	lHat[2] = los[2] / losNorm;
+
+	// Create quaternion that rotates body X-axis [1,0,0] to point toward leader
+	quatVec2Vec(targetQuat, bodyXAxis, lHat);
+}
+
+void GetTargetVector(state_vector viewerState, state_vector leaderState, state_vector *targetVector){
+	float los[3];
+	float losNorm;
+	float lHat[3];
+	float bodyXAxis[3] = {1.0f, 0.0f, 0.0f};
+	float targetQuat[4];
+
+
+	// l_hat = (p_leader - p_viewer) / || p_leader - p_viewer ||
+	los[0] = leaderState[0] - viewerState[0];
+	los[1] = leaderState[1] - viewerState[1];
+	los[2] = leaderState[2] - viewerState[2];
+
+	losNorm = sqrtf(los[0]*los[0] + los[1]*los[1] + los[2]*los[2]);
+
+	if (losNorm < 1e-6f) {
+		// Viewer and leader are at same position, return identity quaternion
+		targetQuat[0] = 0.0f;
+		targetQuat[1] = 0.0f;
+		targetQuat[2] = 0.0f;
+		targetQuat[3] = 1.0f;
+
+	}
+	else{
+		// Normalize line-of-sight
+		lHat[0] = los[0] / losNorm;
+		lHat[1] = los[1] / losNorm;
+		lHat[2] = los[2] / losNorm;
+
+		quatVec2Vec(targetQuat, bodyXAxis, lHat);
+	}
+
+		(*targetVector)[POS_X] = viewerState[0];
+		(*targetVector)[POS_Y] = viewerState[1];
+		(*targetVector)[POS_Z] = viewerState[2];
+		(*targetVector)[QUAT_1] = targetQuat[0];
+		(*targetVector)[QUAT_2] = targetQuat[1];
+		(*targetVector)[QUAT_3] = targetQuat[2];
+		(*targetVector)[QUAT_4] = targetQuat[3];
+
+		return;
+}
+

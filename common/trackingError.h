@@ -14,7 +14,7 @@
 
 #ifndef TRACKING_ERROR_H
 #define TRACKING_ERROR_H
-
+#include "spheres_types.h"
 /*
  * Inputs:
  *   viewerPos  - [X,Y,Z] position of the viewer (controller vehicle), meters
@@ -31,5 +31,8 @@
  */
 float calculateTrackingError(const float viewerPos[3], const float leaderPos[3],
 							  const float viewerQuat[4]);
+
+
+void GetTargetVector(state_vector viewerState, state_vector leaderState, state_vector *targetVector);
 
 #endif /* TRACKING_ERROR_H */
