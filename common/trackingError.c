@@ -126,9 +126,9 @@ void GetTargetVector(state_vector viewerState, state_vector leaderState, state_v
 		quatVec2Vec(targetQuat, bodyXAxis, lHat);
 	}
 
-		(*targetVector)[POS_X] = viewerState[0];
-		(*targetVector)[POS_Y] = viewerState[1];
-		(*targetVector)[POS_Z] = viewerState[2];
+		(*targetVector)[POS_X] = VIEWER_INIT_X_M;
+		(*targetVector)[POS_Y] = VIEWER_INIT_Y_M;
+		(*targetVector)[POS_Z] = VIEWER_INIT_Z_M;
 		(*targetVector)[QUAT_1] = targetQuat[0];
 		(*targetVector)[QUAT_2] = targetQuat[1];
 		(*targetVector)[QUAT_3] = targetQuat[2];

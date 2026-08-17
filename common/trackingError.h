@@ -15,6 +15,9 @@
 #ifndef TRACKING_ERROR_H
 #define TRACKING_ERROR_H
 #include "spheres_types.h"
+#define VIEWER_INIT_X_M 0.0
+#define VIEWER_INIT_Y_M -0.3
+#define VIEWER_INIT_Z_M 0.0
 /*
  * Inputs:
  *   viewerPos  - [X,Y,Z] position of the viewer (controller vehicle), meters

@@ -122,9 +122,12 @@ void gspTaskRun(unsigned int gsp_task_trigger, unsigned int extra_data)
 
 void gspControl(unsigned int test_number, unsigned int test_time, unsigned int maneuver_number, unsigned int maneuver_time)
 {
-	state_vector ctrlState;
-	state_vector ctrlStateTarget;
-	state_vector ctrlStateError;
+	state_vector ctrlState; // State of the sphere currenty being controlled
+	state_vector ctrlStateTarget; // Target state for the current sphere being controlled
+	state_vector ctrlStateError; // Error between the current state
+
+	state_vector leaderCurState; // current state of the leader sphere used by the viewer controller to figure out target vector. 
+
 	float acceleration[3] = {0.0f, 0.0f, 0.0f};
 	float ctrlControl[6];
 	prop_time firing_times;
@@ -136,10 +139,15 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 
 	extern const float KPattitudePD, KDattitudePD, KPpositionPD, KDpositionPD, VEHICLE_MASS;
 
+	
+
 	//Clear all uninitialized vectors
 	memset(ctrlControl,0,sizeof(float)*6);
 	memset(ctrlStateTarget,0,sizeof(state_vector));
 	memset(ctrlStateError,0,sizeof(state_vector));
+	memset(leaderCurState,0,sizeof(state_vector));
+
+	
 
 	padsStateGet(ctrlState);
 
@@ -147,6 +155,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 		case 1: //Estimator initialization
 			if (test_time >= 10000) {
 				ctrlManeuverTerminate();
+
 			}
 			break;
 		case 2:
@@ -233,7 +242,20 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 					// pointingErrorDeg is available here for logging, or for
 					// driving a "point-at-leader" attitude controller later.
 					(void)pointingErrorDeg;
+
+					leaderCurState[POS_X] = receivedLeaderPos[0];
+					leaderCurState[POS_Y] = receivedLeaderPos[1];
+					leaderCurState[POS_Z] = receivedLeaderPos[2];
 				}
+				
+				
+				
+				//void ViewerController(int maneuverNumber, state_vector viewCurState, state_vector leadCurState, state_vector * targetVector);
+				ViewerController(1, ctrlState, leaderCurState, &ctrlStateTarget);
+				
+
+
+
 			}					
 			ctrlStateTarget[QUAT_1] = 1.0f;
 			//find error
