@@ -35,8 +35,8 @@ void ViewerController(int maneuverNumber, state_vector viewCurState, state_vecto
     state_vector trackingError;
     
     SelectGains(gains, maneuverNumber);    // Determine proper gains based on maneuver number
-    GetTargetVector(viewCurState, leadCurState, targetVector); // Calculate the target vector
-    FindStateError(trackingError ,targetVector, viewCurState); // Calculate the state error between the target and current state
+    GetTargetVector(viewCurState, leadCurState, &targetVector); // Calculate the target vector
+    findStateError(trackingError ,targetVector, viewCurState); // Calculate the state error between the target and current state
     
     
     // Call the provided controller function with selected gains
