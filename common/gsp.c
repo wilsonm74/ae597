@@ -90,7 +90,7 @@ void gspInitProgram()
 void gspInitTest(unsigned int test_number)
 {
 	extern state_vector initState;
-    memcpy(trajectory_origin, initState, sizeof(state_vector));
+	memcpy(trajectory_origin, initState, sizeof(state_vector));
 	if (sysIdentityGet() == SPHERE1){
 		padsEstimatorInitWaitAndSet(initState, 50, 200, 105, PADS_INIT_THRUST_INT_ENABLE,PADS_BEACONS_SET_1TO9); // ISS
 	} else {
@@ -129,8 +129,8 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 	float ctrlControl[6];
 	prop_time firing_times;
 	const int min_pulse = 10;
-    int metrology_cycle = 0;
-    static float pulse_demand_ms[12] = {0.0f};
+	int metrology_cycle = 0;
+	static float pulse_demand_ms[12] = {0.0f};
 
 	static unsigned int next_log_time = 0;
 
@@ -206,7 +206,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 				// its pointing error relative to us.
 				leaderPositionBroadcast(leaderPos);
 
-                metrology_cycle = ((maneuver_time % 1000U) < ctrlPeriodGet());
+				metrology_cycle = ((maneuver_time % 1000U) < ctrlPeriodGet());
 				padsGlobalPeriodSet(SYS_FOREVER);				
 
 			} else {
@@ -254,11 +254,11 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 
 			//mix forces/torques into thruster commands
 			// ctrlMixWLoc(&firing_times, ctrlControl, ctrlState, min_pulse, 20.0f, FORCE_FRAME_INERTIAL);
-            trajectoryMixAndQuantize(&firing_times, ctrlControl, ctrlState, pulse_demand_ms);
+			trajectoryMixAndQuantize(&firing_times, ctrlControl, ctrlState, pulse_demand_ms);
 			
-            if (metrology_cycle) {
-                memset(&firing_times, 0, sizeof(prop_time));
-            }
+			if (metrology_cycle) {
+				memset(&firing_times, 0, sizeof(prop_time));
+			}
 
 			//Set firing times
 			propSetThrusterTimes(&firing_times);
