@@ -27,16 +27,9 @@ extern const float KPattitudePD, KDattitudePD;
 ///
 ///  Inputs:
 ///     Called from main: handles the needed calls to other functions to generate proper thrust commands to the viewer sphere
-void ViewerController(int maneuverNumber, state_vector viewCurState, state_vector leadCurState, state_vector * targetVector){
-
-    // Create arrays hope we won't need to alloc at any point
-    float gains[6] = {0}; 
-    prop_time firing_times;
-    state_vector targetVector;
-    state_vector trackingError;
+void ViewerController(int maneuverNumber, state_vector viewCurState, state_vector leadCurState, state_vector *targetVector){
     
-    SelectGains(gains, maneuverNumber);    // Determine proper gains based on maneuver number
-    GetTargetVector(viewCurState, leadCurState, &targetVector); // Calculate the target vector
+    GetTargetVector(viewCurState, leadCurState, targetVector); // Calculate the target vector
     
 }
 

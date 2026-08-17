@@ -1,22 +1,24 @@
 
-nSph = 1;
+nSph = 2;
 
 useEstimatedState = false;
 legLocation = 'eastoutside';
 
 if useEstimatedState
-    time = cfg.data{1}.BackTel.StdTime;
-    state = cfg.data{1}.BackTel.StdState;
+    time = cfg.data{nSph}.BackTel.StdTime;
+    state = cfg.data{nSph}.BackTel.StdState;
 else
-    time = cfg.trueStateT{1};
-    state = cfg.trueStates{1};
+    time = cfg.trueStateT{nSph};
+    state = cfg.trueStates{nSph};
 end
 
 t_s = time / 1000.0;
 
-debug_float = getDebugFloatTelemetry(cfg, 1);
-traj_t = debug_float(1,:);
+debug_float = getDebugFloatTelemetry(cfg, nSph);
+debug_t = debug_float(1,:);
 traj = [debug_float(3:5,:)];
+
+pointingError = debug_float(2,:);
 
 %%
 
@@ -84,38 +86,17 @@ legend({'Trajectory Reference'}, 'Location', legLocation)
 %%
 
 figure(3)
-tiledlayout(2,1)
+tiledlayout(1,1)
 
-ax(1) = nexttile;
-plot(t_s, state(1:3,:), '--');
-hold on
-ax(1).ColorOrderIndex = 1;
-plot(traj_t, traj)
-hold off
-xlim('tight')
-
-title('Trajectory vs. Reference')
+nexttile
+plot(debug_t, pointingError)
+yline(5, 'r:')
+title('Viewer Pointing Error')
 xlabel('Time (s)');
-ylabel('Position (m)');
-legend({'X_{ref}', 'Y_{ref}', 'Z_{ref}', 'X', 'Y', 'Z'}, 'Location', legLocation)
+ylabel('Pointing Error (deg)');
+legend({'Error', 'Threshold'}, 'Location', legLocation)
 grid on
 
-traj_rs = interp1(traj_t, traj.', t_s).';
-
-ax(2) = nexttile;
-plot(t_s, abs(traj_rs-state(1:3,:)));
-
-yline(0.2, 'r:', 'LineWidth', 1.2)
-ylim([-0.05, 0.25])
-xlim('tight')
-
-title('Trajectory Error')
-xlabel('Time (s)');
-ylabel('Position (m)');
-legend({'X', 'Y', 'Z', 'Threshold'}, 'Location', legLocation)
-grid on
-
-linkaxes(ax, 'x')
 
 %%
 

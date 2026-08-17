@@ -54,6 +54,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "leaderPositionComm.h"
 #include "trackingError.h"
 #include "functionLibraryMSW.h"
+#include "ViewerControllerMAB.h"
 
 #define MINIMUM_PULSE_MS 10
 
@@ -129,6 +130,8 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 	state_vector leaderCurState; // current state of the leader sphere used by the viewer controller to figure out target vector. 
 
 	float acceleration[3] = {0.0f, 0.0f, 0.0f};
+	float pointingErrorDeg = 0.0f;
+	int leaderPosReceived = 0;
 	float ctrlControl[6];
 	prop_time firing_times;
 	const int min_pulse = 10;
@@ -213,6 +216,8 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 				}
 				// Broadcast our position so the viewer (SPHERE2) can compute
 				// its pointing error relative to us.
+				ctrlStateTarget[QUAT_4] = 1.0f;
+
 				leaderPositionBroadcast(leaderPos);
 
 				metrology_cycle = ((maneuver_time % 1000U) < ctrlPeriodGet());
@@ -221,9 +226,6 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 			} else if (sysIdentityGet()==SPHERE2) {
 				float viewerPos[3];
 				float receivedLeaderPos[3];
-				float pointingErrorDeg;
-
-				ctrlStateTarget[POS_X] = -0.5f;
 
 				// Viewer (SPHERE2): compute pointing error toward the
 				// leader, using the most recently received leader position.
@@ -231,7 +233,8 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 				viewerPos[1] = ctrlState[POS_Y];
 				viewerPos[2] = ctrlState[POS_Z];
 
-				if (leaderPositionGet(receivedLeaderPos)) {
+				leaderPosReceived = leaderPositionGet(receivedLeaderPos);
+				if (leaderPosReceived) {
 					// ctrlState[QUAT_1..QUAT_4] are contiguous floats, and
 					// (per the existing code's use of ctrlStateTarget[QUAT_1]
 					// = 1.0f for identity attitude) QUAT_1 is the scalar
@@ -241,7 +244,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 															   &ctrlState[QUAT_1]);
 					// pointingErrorDeg is available here for logging, or for
 					// driving a "point-at-leader" attitude controller later.
-					(void)pointingErrorDeg;
+					// (void)pointingErrorDeg;
 
 					leaderCurState[POS_X] = receivedLeaderPos[0];
 					leaderCurState[POS_Y] = receivedLeaderPos[1];
@@ -257,7 +260,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 
 
 			}					
-			ctrlStateTarget[QUAT_1] = 1.0f;
+
 			//find error
 			findStateError(ctrlStateError,ctrlState,ctrlStateTarget);
 			//call controllers
@@ -288,7 +291,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 			if (test_time >= next_log_time) {
 				float debug_values[8] = {0};
 				debug_values[0] = (float)test_time / 1000.0f;
-				debug_values[1] = (float)boundsExceeded;
+				debug_values[1] = (float)pointingErrorDeg;
 				debug_values[2] = (float)ctrlStateTarget[POS_X];
 				debug_values[3] = (float)ctrlStateTarget[POS_Y];
 				debug_values[4] = (float)ctrlStateTarget[POS_Z];

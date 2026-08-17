@@ -8,6 +8,8 @@
 #include "commands.h"
 #include "system.h"
 #include "leaderPositionComm.h"
+#include "comm_internal.h"
+#include "spheres_constants.h"
 #include <string.h>
 
 // COMM_CMD_GSP_PACKET (commands.h) is the generic command code meant for
@@ -26,13 +28,13 @@ void leaderPositionBroadcast(const float leaderPos[3])
 
 	// commSendPacket(channel, to, from, command, source, priority)
 	// -> expands to commSendRFMPacket(channel, to, command, source, priority)
-	commSendPacket(COMM_CHANNEL_STS, BROADCAST_HWID, sysIdentityGet(),
+	commSendPacket(COMM_CHANNEL_STS, BROADCAST, sysIdentityGet(),
 				   LEADER_POS_CMD, payload, (COMM_LOW_PRIORITY | COMM_NO_ACK));
 }
 
 void leaderPositionProcessPacket(default_rfm_packet packet)
 {
-	if (packet[PKT_CM] == LEADER_POS_CMD) {
+	if ((packet[PKT_CM] & COMM_CMD_MASK) == LEADER_POS_CMD) {
 		memcpy(lastLeaderPos, &packet[PKT_DATA], sizeof(float) * 3);
 		leaderPosReceived = 1;
 	}
