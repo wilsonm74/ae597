@@ -19,6 +19,7 @@
 #define LEADER_POSITION_COMM_H
 
 #include "comm.h"
+#include "state_machine.h"
 
 // Call once per control cycle from the LEADER (SPHERE1) to broadcast its
 // current [X,Y,Z] position to the other vehicle(s).
@@ -37,5 +38,11 @@ void leaderPositionProcessPacket(default_rfm_packet packet);
 //            yet (e.g. very start of the test, before SPHERE1's first
 //            broadcast has arrived).
 unsigned char leaderPositionGet(float leaderPos[3]);
+
+void viewerModeSend(viewerStates currentState);
+
+void viewerModeProcessPacket(default_rfm_packet packet);
+
+unsigned char viewerModeGet(viewerStates *currentState);
 
 #endif /* LEADER_POSITION_COMM_H */

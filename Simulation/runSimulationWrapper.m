@@ -10,6 +10,7 @@ RunSimulation(cfg);
 disp('Press any key to continue...');
 pause;
 
-% plottingScriptLeader
+plottingScriptLeader
 
 plottingScriptViewer
+

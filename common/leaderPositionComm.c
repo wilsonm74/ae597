@@ -3,7 +3,7 @@
  *
  * See leaderPositionComm.h.
  */
-
+#include "state_machine.h"
 #include "comm.h"
 #include "commands.h"
 #include "system.h"
@@ -18,6 +18,9 @@
 
 static float lastLeaderPos[3] = {0.0f, 0.0f, 0.0f};
 static unsigned char leaderPosReceived = 0;
+
+static viewerStates lastViewerState = ACQUISITION;
+static unsigned char viewerStateReceived = 0;
 
 void leaderPositionBroadcast(const float leaderPos[3])
 {
@@ -48,5 +51,33 @@ unsigned char leaderPositionGet(float leaderPos[3])
 	leaderPos[0] = lastLeaderPos[0];
 	leaderPos[1] = lastLeaderPos[1];
 	leaderPos[2] = lastLeaderPos[2];
+	return 1;
+}
+
+void viewerModeSend(viewerStates currentState)
+{
+	default_comm_payload payload;
+
+	memset(payload, 0, sizeof(payload));
+	payload[0] = (unsigned char)currentState;
+
+	commSendPacket(COMM_CHANNEL_STS, SPHERE1, sysIdentityGet(),
+				   COMM_CMD_GSP_PACKET, payload, (COMM_LOW_PRIORITY | COMM_NO_ACK));
+}
+
+void viewerModeProcessPacket(default_rfm_packet packet)
+{
+	if ((packet[PKT_CM] & COMM_CMD_MASK) == COMM_CMD_GSP_PACKET) {
+		lastViewerState = (viewerStates)packet[PKT_DATA];
+		viewerStateReceived = 1;
+	}
+}
+
+unsigned char viewerModeGet(viewerStates *currentState)
+{
+	if (!viewerStateReceived) {
+		return 0;
+	}
+	*currentState = lastViewerState;
 	return 1;
 }

@@ -22,7 +22,7 @@ pointingError = debug_float(2,:);
 
 %%
 
-figure(1)
+figure(5)
 tiledlayout(2,2)
 
 nexttile
@@ -60,7 +60,7 @@ grid on
 
 %%
 
-figure(2)
+figure(6)
 tiledlayout(1,1)
 
 nexttile
@@ -85,7 +85,7 @@ legend({'Trajectory Reference'}, 'Location', legLocation)
 
 %%
 
-figure(3)
+figure(7)
 tiledlayout(1,1)
 
 nexttile
@@ -95,6 +95,17 @@ title('Viewer Pointing Error')
 xlabel('Time (s)');
 ylabel('Pointing Error (deg)');
 legend({'Error', 'Threshold'}, 'Location', legLocation)
+grid on
+
+%%
+figure(8)
+tiledlayout(1,1)
+
+nexttile
+plot(debug_t, debug_float(8,:))
+title('Viewer State')
+xlabel('Time (s)');
+ylabel('State (n/a)');
 grid on
 
 

@@ -13,7 +13,7 @@ end
 t_s = time / 1000.0;
 
 debug_float = getDebugFloatTelemetry(cfg, 1);
-traj_t = debug_float(1,:);
+debug_t = debug_float(1,:);
 traj = [debug_float(3:5,:)];
 
 %%
@@ -88,7 +88,7 @@ ax(1) = nexttile;
 plot(t_s, state(1:3,:), '--');
 hold on
 ax(1).ColorOrderIndex = 1;
-plot(traj_t, traj)
+plot(debug_t, traj)
 hold off
 xlim('tight')
 
@@ -98,7 +98,7 @@ ylabel('Position (m)');
 legend({'X_{ref}', 'Y_{ref}', 'Z_{ref}', 'X', 'Y', 'Z'}, 'Location', legLocation)
 grid on
 
-traj_rs = interp1(traj_t, traj.', t_s).';
+traj_rs = interp1(debug_t, traj.', t_s).';
 
 ax(2) = nexttile;
 plot(t_s, abs(traj_rs-state(1:3,:)));
@@ -114,6 +114,18 @@ legend({'X', 'Y', 'Z', 'Threshold'}, 'Location', legLocation)
 grid on
 
 linkaxes(ax, 'x')
+
+%%
+figure(4)
+tiledlayout(1,1)
+
+nexttile
+plot(debug_t, debug_float(8,:))
+title('Leader State')
+xlabel('Time (s)');
+ylabel('State (n/a)');
+grid on
+
 
 %%
 

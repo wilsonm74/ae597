@@ -55,8 +55,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "trackingError.h"
 #include "functionLibraryMSW.h"
 #include "ViewerControllerMAB.h"
+#include "state_machine.h"
 
 #define MINIMUM_PULSE_MS 10
+#define INSERT_BOUND_EXCEEDANCE 1
+
+extern state_vector trajectory_origin;
 
 void gspIdentitySet()
 {
@@ -92,6 +96,8 @@ void gspInitTest(unsigned int test_number)
 {
 	extern state_vector initState;
 	memcpy(trajectory_origin, initState, sizeof(state_vector));
+	leaderStateMachineInit();
+	viewerStateMachineInit();
 	if (sysIdentityGet() == SPHERE1){
 		padsEstimatorInitWaitAndSet(initState, 50, 200, 105, PADS_INIT_THRUST_INT_ENABLE,PADS_BEACONS_SET_1TO9); // ISS
 	} else {
@@ -126,23 +132,25 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 	state_vector ctrlState; // State of the sphere currenty being controlled
 	state_vector ctrlStateTarget; // Target state for the current sphere being controlled
 	state_vector ctrlStateError; // Error between the current state
+	state_vector leaderCurState; // current state of the leader sphere used by the viewer controller to figure out target vector.
 
-	state_vector leaderCurState; // current state of the leader sphere used by the viewer controller to figure out target vector. 
+	viewerStates viewerCurrentState = ACQUISITION;
 
 	float acceleration[3] = {0.0f, 0.0f, 0.0f};
 	float pointingErrorDeg = 0.0f;
 	int leaderPosReceived = 0;
 	float ctrlControl[6];
+	unsigned char trajectoryComplete = 0;
+	unsigned char boundsExceeded = 0;
 	prop_time firing_times;
 	const int min_pulse = 10;
 	int metrology_cycle = 0;
 	static float pulse_demand_ms[12] = {0.0f};
+	static unsigned int logged_maneuver = 0;
 
 	static unsigned int next_log_time = 0;
 
 	extern const float KPattitudePD, KDattitudePD, KPpositionPD, KDpositionPD, VEHICLE_MASS;
-
-	
 
 	//Clear all uninitialized vectors
 	memset(ctrlControl,0,sizeof(float)*6);
@@ -150,25 +158,33 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 	memset(ctrlStateError,0,sizeof(state_vector));
 	memset(leaderCurState,0,sizeof(state_vector));
 
-	
-
 	padsStateGet(ctrlState);
 
 	switch(maneuver_number) {
 		case 1: //Estimator initialization
 			if (test_time >= 10000) {
 				ctrlManeuverTerminate();
-
 			}
 			break;
 		case 2:
 		{
+			if (logged_maneuver != maneuver_number) {
+				logged_maneuver = maneuver_number;
+				memcpy(trajectory_origin, ctrlState, sizeof(state_vector));
+			}
 			static trajectory_path_t plannedPath;   // Stage 1 output, built once
 			static unsigned char pathGenerated = 0;
-			unsigned char trajectoryComplete = 0;
-			unsigned char boundsExceeded = 0;
+			static unsigned int following_start_time = 0;
+			static unsigned char following_started = 0;
 
 			if (sysIdentityGet()==SPHERE1) {
+				// get the state of the viewer
+				if (INSERT_BOUND_EXCEEDANCE && test_time > 230000U) {
+					boundsExceeded = 1;
+				}
+				viewerModeGet(&viewerCurrentState);
+				leaderStateMachineUpdate(viewerCurrentState, trajectoryComplete, boundsExceeded);
+
 				float leaderPos[3];
 				unsigned int idx;
 
@@ -190,15 +206,20 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 				// Stage 2: trajectory management
 				trajectoryManagement(&plannedPath, leaderPos, &trajectoryComplete, &boundsExceeded);
 
-				if (boundsExceeded) {
-					// Planned path violates the workspace bounds: hold the
-					// current position rather than command further motion.
-					ctrlStateTarget[POS_X] = leaderPos[0];
-					ctrlStateTarget[POS_Y] = leaderPos[1];
-					ctrlStateTarget[POS_Z] = leaderPos[2];
+				if (leaderStateMachineGetState() != FOLLOWING) {
+					ctrlStateTarget[POS_X] = trajectory_origin[POS_X];
+					ctrlStateTarget[POS_Y] = trajectory_origin[POS_Y];
+					ctrlStateTarget[POS_Z] = trajectory_origin[POS_Z];
+				} else if (leaderStateMachineGetState() == RETURNING) {
+					ctrlStateTarget[POS_X] = trajectory_origin[POS_X];
+					ctrlStateTarget[POS_Y] = trajectory_origin[POS_Y];
+					ctrlStateTarget[POS_Z] = trajectory_origin[POS_Z];
 				} else {
-					idx = maneuver_time / TRAJ_CTRL_PERIOD_MS;
-					// if 
+					if (!following_started) {
+						following_start_time = maneuver_time;
+						following_started = 1;
+					}
+					idx = (maneuver_time - following_start_time) / TRAJ_CTRL_PERIOD_MS;
 					if (idx >= plannedPath.numPoints) {
 						idx = plannedPath.numPoints - 1;
 					}
@@ -221,9 +242,10 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 				leaderPositionBroadcast(leaderPos);
 
 				metrology_cycle = ((maneuver_time % 1000U) < ctrlPeriodGet());
-				padsGlobalPeriodSet(SYS_FOREVER);				
+				padsGlobalPeriodSet(SYS_FOREVER);
 
 			} else if (sysIdentityGet()==SPHERE2) {
+
 				float viewerPos[3];
 				float receivedLeaderPos[3];
 
@@ -249,17 +271,15 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 					leaderCurState[POS_X] = receivedLeaderPos[0];
 					leaderCurState[POS_Y] = receivedLeaderPos[1];
 					leaderCurState[POS_Z] = receivedLeaderPos[2];
+
 				}
-				
-				
+				viewerStateMachineUpdate(pointingErrorDeg, leaderPosReceived);
+				viewerCurrentState = viewerStateMachineGetState();
+				viewerModeSend(viewerCurrentState);
 				
 				//void ViewerController(int maneuverNumber, state_vector viewCurState, state_vector leadCurState, state_vector * targetVector);
 				ViewerController(1, ctrlState, leaderCurState, &ctrlStateTarget);
-				
-
-
-
-			}					
+			}
 
 			//find error
 			findStateError(ctrlStateError,ctrlState,ctrlStateTarget);
@@ -297,7 +317,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 				debug_values[4] = (float)ctrlStateTarget[POS_Z];
 				debug_values[5] = (float)ctrlControl[FORCE_X];
 				debug_values[6] = (float)ctrlControl[FORCE_Y];
-				debug_values[7] = (float)ctrlControl[FORCE_Z];
+				debug_values[7] = (float)(int)leaderStateMachineGetState();
 
 				commSendPacket(
 					COMM_CHANNEL_STL,
@@ -319,15 +339,12 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 			// reports completion (or a bounds violation). Followers, which
 			// don't run trajectory management themselves, fall back to the
 			// planned total duration.
-			if (sysIdentityGet() == SPHERE1) {
-				if (trajectoryComplete || boundsExceeded) {
-					ctrlTestTerminate(TEST_RESULT_NORMAL);
-				}
-			} else {
-				if (test_time >= TRAJ_TOTAL_MS) {
-					ctrlTestTerminate(TEST_RESULT_NORMAL);
-				}
+
+
+			if (test_time >= TRAJ_TOTAL_MS) {
+				ctrlTestTerminate(TEST_RESULT_NORMAL);
 			}
+			
 			break;
 		}
 	}
@@ -337,4 +354,5 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 void gspProcessRXData(default_rfm_packet packet)
 {
 	leaderPositionProcessPacket(packet);
+	viewerModeProcessPacket(packet);
 }
