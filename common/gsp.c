@@ -237,7 +237,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 				}
 				// Broadcast our position so the viewer (SPHERE2) can compute
 				// its pointing error relative to us.
-				ctrlStateTarget[QUAT_4] = 1.0f;
+				ctrlStateTarget[QUAT_1] = 1.0f;
 
 				leaderPositionBroadcast(leaderPos);
 
@@ -316,7 +316,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 				debug_values[3] = (float)ctrlStateTarget[POS_Y];
 				debug_values[4] = (float)ctrlStateTarget[POS_Z];
 				debug_values[5] = (float)ctrlControl[FORCE_X];
-				debug_values[6] = (float)ctrlControl[FORCE_Y];
+				debug_values[6] = (float)(int)viewerStateMachineGetState();
 				debug_values[7] = (float)(int)leaderStateMachineGetState();
 
 				commSendPacket(

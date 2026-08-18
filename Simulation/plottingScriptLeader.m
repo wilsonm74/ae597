@@ -124,6 +124,9 @@ plot(debug_t, debug_float(8,:))
 title('Leader State')
 xlabel('Time (s)');
 ylabel('State (n/a)');
+ylim([-0.2 2.2])
+yticks([0, 1, 2])
+yticklabels({'STANDBY', 'FOLLOWING', 'RETURNING'})
 grid on
 
 

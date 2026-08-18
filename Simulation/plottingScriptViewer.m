@@ -19,6 +19,7 @@ debug_t = debug_float(1,:);
 traj = [debug_float(3:5,:)];
 
 pointingError = debug_float(2,:);
+viewerMode = debug_float(7,:);
 
 %%
 
@@ -60,52 +61,58 @@ grid on
 
 %%
 
-figure(6)
-tiledlayout(1,1)
-
-nexttile
-plot3(traj(1,:), traj(2,:), traj(3,:), 'k--')
-grid on
-axis equal
-
-hold on
-
-cmap = jet(length(time));
-
-for idx = 1:length(time)
-    plot3(state(1,idx), state(2,idx), state(3,idx), '.', 'color', cmap(idx, :), 'MarkerSize', 10)
-end
-hold off
-
-title('3D Path vs. Time')
-xlabel('X Position (m)');
-ylabel('Y Position (m)');
-zlabel('Z Position (m)');
-legend({'Trajectory Reference'}, 'Location', legLocation)
+% figure(6)
+% tiledlayout(1,1)
+% 
+% nexttile
+% plot3(traj(1,:), traj(2,:), traj(3,:), 'k--')
+% grid on
+% axis equal
+% 
+% hold on
+% 
+% cmap = jet(length(time));
+% 
+% for idx = 1:length(time)
+%     plot3(state(1,idx), state(2,idx), state(3,idx), '.', 'color', cmap(idx, :), 'MarkerSize', 10)
+% end
+% hold off
+% 
+% title('3D Path vs. Time')
+% xlabel('X Position (m)');
+% ylabel('Y Position (m)');
+% zlabel('Z Position (m)');
+% legend({'Trajectory Reference'}, 'Location', legLocation)
 
 %%
 
-figure(7)
+figure(6)
 tiledlayout(1,1)
+
+trkSt = find(viewerMode > 0.5, 1);
 
 nexttile
 plot(debug_t, pointingError)
 yline(5, 'r:')
+xline(debug_t(trkSt), 'g:')
 title('Viewer Pointing Error')
 xlabel('Time (s)');
 ylabel('Pointing Error (deg)');
-legend({'Error', 'Threshold'}, 'Location', legLocation)
+legend({'Error', 'Threshold', 'Tracking'}, 'Location', legLocation)
 grid on
 
 %%
-figure(8)
+figure(7)
 tiledlayout(1,1)
 
 nexttile
-plot(debug_t, debug_float(8,:))
+plot(debug_t, viewerMode)
 title('Viewer State')
 xlabel('Time (s)');
 ylabel('State (n/a)');
+ylim([-0.2 1.2])
+yticks([0, 1])
+yticklabels({'ACQUISTION', 'TRACKING'})
 grid on
 
 
