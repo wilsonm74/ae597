@@ -39,6 +39,7 @@
  * through the whole path and arrived back at the final waypoint.
  */
 void trajectoryManagement(const trajectory_path_t *path, const float leaderPos[3],
-						   unsigned char *trajectoryComplete, unsigned char *boundsExceeded);
+						   unsigned char *trajectoryComplete, unsigned char *boundsExceeded,
+						   unsigned char following_started, unsigned int maneuver_time);
 
 #endif

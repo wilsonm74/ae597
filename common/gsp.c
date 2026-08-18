@@ -58,9 +58,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "state_machine.h"
 
 #define MINIMUM_PULSE_MS 10
-#define INSERT_BOUND_EXCEEDANCE 1
+#define INSERT_BOUND_EXCEEDANCE 0
+#define OVERRIDE_BOUND_CHECK 1
 
-extern state_vector trajectory_origin;
+state_vector trajectory_origin;
 
 void gspIdentitySet()
 {
@@ -147,6 +148,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 	int metrology_cycle = 0;
 	static float pulse_demand_ms[12] = {0.0f};
 	static unsigned int logged_maneuver = 0;
+	static unsigned int elapsed_time = 0;
 
 	static unsigned int next_log_time = 0;
 
@@ -178,12 +180,6 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 			static unsigned char following_started = 0;
 
 			if (sysIdentityGet()==SPHERE1) {
-				// get the state of the viewer
-				if (INSERT_BOUND_EXCEEDANCE && test_time > 230000U) {
-					boundsExceeded = 1;
-				}
-				viewerModeGet(&viewerCurrentState);
-				leaderStateMachineUpdate(viewerCurrentState, trajectoryComplete, boundsExceeded);
 
 				float leaderPos[3];
 				unsigned int idx;
@@ -204,13 +200,18 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 				leaderPos[2] = ctrlState[POS_Z];
 
 				// Stage 2: trajectory management
-				trajectoryManagement(&plannedPath, leaderPos, &trajectoryComplete, &boundsExceeded);
+				trajectoryManagement(&plannedPath, leaderPos, &trajectoryComplete, &boundsExceeded, following_started, elapsed_time);
+
+				if (INSERT_BOUND_EXCEEDANCE && test_time > 230000U) {
+					boundsExceeded = 1;
+				}
+				if (OVERRIDE_BOUND_CHECK) {
+					boundsExceeded = 0;
+				}
+				viewerModeGet(&viewerCurrentState);
+				leaderStateMachineUpdate(viewerCurrentState, trajectoryComplete, boundsExceeded);
 
 				if (leaderStateMachineGetState() != FOLLOWING) {
-					ctrlStateTarget[POS_X] = trajectory_origin[POS_X];
-					ctrlStateTarget[POS_Y] = trajectory_origin[POS_Y];
-					ctrlStateTarget[POS_Z] = trajectory_origin[POS_Z];
-				} else if (leaderStateMachineGetState() == RETURNING) {
 					ctrlStateTarget[POS_X] = trajectory_origin[POS_X];
 					ctrlStateTarget[POS_Y] = trajectory_origin[POS_Y];
 					ctrlStateTarget[POS_Z] = trajectory_origin[POS_Z];
@@ -219,7 +220,8 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 						following_start_time = maneuver_time;
 						following_started = 1;
 					}
-					idx = (maneuver_time - following_start_time) / TRAJ_CTRL_PERIOD_MS;
+					elapsed_time = maneuver_time - following_start_time;
+					idx = elapsed_time / TRAJ_CTRL_PERIOD_MS;
 					if (idx >= plannedPath.numPoints) {
 						idx = plannedPath.numPoints - 1;
 					}
@@ -315,7 +317,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 				debug_values[2] = (float)ctrlStateTarget[POS_X];
 				debug_values[3] = (float)ctrlStateTarget[POS_Y];
 				debug_values[4] = (float)ctrlStateTarget[POS_Z];
-				debug_values[5] = (float)ctrlControl[FORCE_X];
+				debug_values[5] = (float)(int)trajectoryComplete;
 				debug_values[6] = (float)(int)viewerStateMachineGetState();
 				debug_values[7] = (float)(int)leaderStateMachineGetState();
 
@@ -340,10 +342,11 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 			// don't run trajectory management themselves, fall back to the
 			// planned total duration.
 
-
-			if (test_time >= TRAJ_TOTAL_MS) {
+			/*
+			if (trajectoryComplete != 0) {
 				ctrlTestTerminate(TEST_RESULT_NORMAL);
 			}
+			*/
 			
 			break;
 		}

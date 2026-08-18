@@ -5,7 +5,10 @@
  */
 
 #include "trajectoryPlanner.h"
+#include "functionLibraryMSW.h"
+#include "spheres_constants.h"
 #include <math.h>
+#define DIRECTION 1.0f
 
 void plannedTrajectoryGenerate(trajectory_path_t *path)
 {
@@ -17,16 +20,16 @@ void plannedTrajectoryGenerate(trajectory_path_t *path)
 	path->numPoints = TRAJ_NUM_POINTS;
 	for (i = 0; i < TRAJ_NUM_POINTS; i++) {
 		t_ms = (float)(i * TRAJ_CTRL_PERIOD_MS);
-		angle = (CIRCLE_TWO_PI * t_ms) / (float)CIRCLE_PERIOD_MS;
+		angle = DIRECTION * (CIRCLE_TWO_PI * t_ms) / (float)CIRCLE_PERIOD_MS;
 		omega = CIRCLE_TWO_PI / ((float)CIRCLE_PERIOD_MS / 1000.0f);
 
-		path->pos[i][0] = CIRCLE_RADIUS_X * cosf(angle);  // X
-		path->pos[i][1] = CIRCLE_CENTER_Y;                // Y
-		path->pos[i][2] = CIRCLE_RADIUS_Z * sinf(angle);  // Z
+		path->pos[i][0] = CIRCLE_RADIUS_X * (cosf(angle) - 1.0f) + trajectory_origin[POS_X];  // X
+		path->pos[i][1] = trajectory_origin[POS_Y];                // Y
+		path->pos[i][2] = CIRCLE_RADIUS_Z * sinf(angle) + trajectory_origin[POS_Z];  // Z
 
-		path->vel[i][0] = -CIRCLE_RADIUS_X * omega * sinf(angle);  // X
+		path->vel[i][0] = -CIRCLE_RADIUS_X * DIRECTION * omega * sinf(angle);  // X
 		path->vel[i][1] = 0.0f;                                                                                                     // Y
-		path->vel[i][2] = CIRCLE_RADIUS_Z * omega * cosf(angle);  // Z
+		path->vel[i][2] = CIRCLE_RADIUS_Z * DIRECTION * omega * cosf(angle);  // Z
 
 		path->accel[i][0] = -CIRCLE_RADIUS_X * omega * omega * cosf(angle);  // X
 		path->accel[i][1] = 0.0f;                                                                                                     // Y

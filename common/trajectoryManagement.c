@@ -6,36 +6,23 @@
 
 #include "trajectoryManagement.h"
 #include <math.h>
+#include <stdbool.h>
+
+#define SQUARE(x) ((x)*(x))
 
 void trajectoryManagement(const trajectory_path_t *path, const float leaderPos[3],
-						   unsigned char *trajectoryComplete, unsigned char *boundsExceeded)
+						   unsigned char *trajectoryComplete, unsigned char *boundsExceeded, unsigned char following_started, unsigned int maneuver_time)
 {
-	static unsigned int targetIdx = 0;   // furthest waypoint reached so far
-	unsigned int i;
-	float dx, dy, dz, dist;
-
-	// --- Output 2: does the planned path stay within the workspace bounds? ---
 	*boundsExceeded = 0;
-	for (i = 0; i < path->numPoints; i++) {
-		if (path->pos[i][0] >  BOUND_X || path->pos[i][0] < -BOUND_X ||
-			path->pos[i][1] >  BOUND_Y || path->pos[i][1] < -BOUND_Y ||
-			path->pos[i][2] >  BOUND_Z || path->pos[i][2] < -BOUND_Z) {
-			*boundsExceeded = 1;
-			break;
-		}
+	if (leaderPos[0] >  BOUND_X || leaderPos[0] < -BOUND_X ||
+		leaderPos[1] >  BOUND_Y || leaderPos[1] < -BOUND_Y ||
+		leaderPos[2] >  BOUND_Z || leaderPos[2] < -BOUND_Z) {
+		*boundsExceeded = 1;
 	}
 
-	// --- Output 1: has the leader progressed through the whole path? ---
-	dx = leaderPos[0] - path->pos[targetIdx][0];
-	dy = leaderPos[1] - path->pos[targetIdx][1];
-	dz = leaderPos[2] - path->pos[targetIdx][2];
-	dist = sqrtf(dx*dx + dy*dy + dz*dz);
+	float finalDist = sqrtf(SQUARE(leaderPos[0] - path->pos[path->numPoints - 1][0]) +
+							SQUARE(leaderPos[1] - path->pos[path->numPoints - 1][1]) +
+							SQUARE(leaderPos[2] - path->pos[path->numPoints - 1][2]));
 
-	// Once close enough to the current waypoint, advance to the next one
-	if (dist <= TRAJ_COMPLETE_TOLERANCE && targetIdx < path->numPoints - 1) {
-		targetIdx++;
-	}
-
-	*trajectoryComplete = (targetIdx >= path->numPoints - 1 &&
-							dist <= TRAJ_COMPLETE_TOLERANCE) ? 1 : 0;
+	*trajectoryComplete = following_started && (maneuver_time >= 0.8f*TRAJ_TOTAL_MS) && finalDist <= TRAJ_COMPLETE_TOLERANCE;
 }

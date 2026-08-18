@@ -72,18 +72,64 @@ cfg.stepSize = 1000; %How large each major simulation step should be. Affects re
 
 %SPHERES states
 initStates = zeros(13, cfg.nSph);
-% SPHERE1: start on the circular path defined in gsp.c (t=0 -> X=+0.8, Z=0)
-initStates(1,1) = 0.6;  % X [m] (bound +/-0.8m)
-initStates(2,1) = 0.4;    % Y [m] (bound +/-0.2m)
-initStates(3,1) = 0;    % Z [m] (bound +/-0.8m)
-% SPHERE2: unchanged lateral offset from original config.
-% NOTE: SPHERE2's static target (X = -0.5, see gsp.c) sits inside SPHERE1's
-% circle (radius 0.8m). Consider moving SPHERE2 further away if you want to
-% avoid a close pass while SPHERE1 is circling.
-initStates(1,2) =  0.0;
-initStates(2,2) =  -0.4;
-initStates(3,2) =  0.0;
-initStates(7,1:cfg.nSph) = 1; %Tank Down for both SPHERES
+
+switch cfg.test_number
+    case 1
+	    initStates(1:3,1) = [0.000000, 0.000000, 0.000000];
+	    initStates(1:3,2) = [-0.700000, 0.000000, 0.000000];
+	    initStates(7:10,2) = [0.000000, 0.000000, -1.000000, 0.000000];
+	    initStates(7,1) = 1;
+    
+    case 2
+	    initStates(1:3,1) = [0.000000, 0.000000, 0.500000];
+	    initStates(1:3,2) = [0.000000, 0.000000, 0.000000];
+	    initStates(7:10,2) = [0.000000, 0.000000, -1.000000, 0.000000];
+	    initStates(7,1) = 1;
+    
+    case 3
+	    initStates(1:3,1) = [0.000000, 0.000000, 0.000000];
+	    initStates(1:3,2) = [-0.260000, -0.720000, 0.510000];
+	    initStates(7:10,2) = [0.000000, 0.000000, -1.000000, 0.000000];
+	    initStates(7,1) = 1;
+    
+    case 4
+	    initStates(1:3,1) = [0.000000, 0.000000, 0.000000];
+	    initStates(1:3,2) = [-0.700000, 0.000000, 0.000000];
+	    initStates(7:10,2) = [0.000000, 0.707100, 0.000000, 0.707100];
+	    initStates(7,1) = 1;
+    
+    case 5
+	    initStates(1:3,1) = [0.000000, 0.000000, 0.500000];
+	    initStates(1:3,2) = [0.000000, 0.000000, 0.000000];
+	    initStates(7:10,2) = [0.000000, 0.707100, 0.000000, 0.707100];
+	    initStates(7,1) = 1;
+    
+    case 6
+	    initStates(1:3,1) = [0.000000, 0.000000, 0.000000];
+	    initStates(1:3,2) = [-0.260000, -0.720000, 0.510000];
+	    initStates(7:10,2) = [0.000000, 0.707100, 0.000000, 0.707100];
+	    initStates(7,1) = 1;
+    
+    case 7
+	    initStates(1:3,1) = [0.000000, 0.000000, 0.000000];
+	    initStates(1:3,2) = [-0.700000, 0.000000, 0.000000];
+	    initStates(7:10,2) = [0.707100, 0.000000, 0.000000, 0.707100];
+	    initStates(7,1) = 1;
+    
+    case 8
+	    initStates(1:3,1) = [0.000000, 0.000000, 0.500000];
+	    initStates(1:3,2) = [0.000000, 0.000000, 0.000000];
+	    initStates(7:10,2) = [0.707100, 0.000000, 0.000000, 0.707100];
+	    initStates(7,1) = 1;
+    
+    case 9
+	    initStates(1:3,1) = [0.000000, 0.000000, 0.000000];
+	    initStates(1:3,2) = [-0.260000, -0.720000, 0.510000];
+	    initStates(7:10,2) = [0.707100, 0.000000, 0.000000, 0.707100];
+	    initStates(7,1) = 1;
+
+end
+
 cfg.initStates = initStates;
 
 %Runtime command

@@ -13,6 +13,6 @@ void trajectoryPhaseSimple(float t_s, float period_s, float *phase, float *phase
 
 void calculateLeaderControl(state_vector state, state_vector target, control_vector *control, float trajectory_acceleration[3]);
 
-state_vector trajectory_origin;
+extern state_vector trajectory_origin;
 
 #endif

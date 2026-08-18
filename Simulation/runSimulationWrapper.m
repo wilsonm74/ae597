@@ -1,4 +1,4 @@
-cfg = configureSim2;
+cfg = configureSim3;
 
 BuildSimulation(cfg)
 

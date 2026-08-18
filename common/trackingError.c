@@ -6,6 +6,7 @@
 
 #include "trackingError.h"
 #include "math_quat.h"
+#include "functionLibraryMSW.h"
 #include <math.h>
 #include "spheres_constants.h"
 #define RAD_TO_DEG 57.29577951f
@@ -126,9 +127,9 @@ void GetTargetVector(state_vector viewerState, state_vector leaderState, state_v
 		quatVec2Vec(targetQuat, bodyXAxis, lHat);
 	}
 
-		(*targetVector)[POS_X] = VIEWER_INIT_X_M;
-		(*targetVector)[POS_Y] = VIEWER_INIT_Y_M;
-		(*targetVector)[POS_Z] = VIEWER_INIT_Z_M;
+		(*targetVector)[POS_X] = trajectory_origin[POS_X];
+		(*targetVector)[POS_Y] = trajectory_origin[POS_Y];
+		(*targetVector)[POS_Z] = trajectory_origin[POS_Z];
 		(*targetVector)[QUAT_1] = targetQuat[0];
 		(*targetVector)[QUAT_2] = targetQuat[1];
 		(*targetVector)[QUAT_3] = targetQuat[2];
