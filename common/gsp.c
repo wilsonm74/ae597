@@ -149,6 +149,7 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 	static float pulse_demand_ms[12] = {0.0f};
 	static unsigned int logged_maneuver = 0;
 	static unsigned int elapsed_time = 0;
+	static unsigned int next_leader_broadcast_time = 0;
 
 	static unsigned int next_log_time = 0;
 
@@ -241,7 +242,10 @@ void gspControl(unsigned int test_number, unsigned int test_time, unsigned int m
 				// its pointing error relative to us.
 				ctrlStateTarget[QUAT_1] = 1.0f;
 
-				leaderPositionBroadcast(leaderPos);
+				if (maneuver_time >= next_leader_broadcast_time) {
+					leaderPositionBroadcast(leaderPos);
+					next_leader_broadcast_time = maneuver_time + 200U;
+				}
 
 				metrology_cycle = ((maneuver_time % 1000U) < ctrlPeriodGet());
 				padsGlobalPeriodSet(SYS_FOREVER);
