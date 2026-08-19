@@ -13,4 +13,7 @@ Makefile
 *.pjt
 *.asv
 *.sh
+*.pdf
+*.zip
+data/
 

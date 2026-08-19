@@ -1,8 +1,8 @@
-function cfg = configureSim2()
+function cfg = configureSim3(testNumber)
 s=dbstatus('-completenames');
 save bkpt s
 %% clear
-clear; clear global; clear mex; close all hidden;% clc;
+% clear; clear global; clear mex; close all hidden;% clc;
 %% restore breakpoitns
 load bkpt 
 dbstop(s);
@@ -50,7 +50,7 @@ globalvarSPHERES;
 % Use this section to configure parameters related to the simulation
 % environment and execution options
 
-cfg.test_number = 1;
+cfg.test_number = testNumber;
 cfg.nSph = 2;
 cfg.simMode = 'mex'; % Simulation can run in 'mex' or 'simulink' modes
 
@@ -75,7 +75,7 @@ initStates = zeros(13, cfg.nSph);
 
 switch cfg.test_number
     case 1
-	    initStates(1:3,1) = [0.000000, 0.000000, 0.000000];
+	    initStates(1:3,1) = [0.600000, 0.000000, 0.000000];
 	    initStates(1:3,2) = [-0.700000, 0.000000, 0.000000];
 	    initStates(7:10,2) = [0.000000, 0.000000, -1.000000, 0.000000];
 	    initStates(7,1) = 1;
@@ -87,13 +87,13 @@ switch cfg.test_number
 	    initStates(7,1) = 1;
     
     case 3
-	    initStates(1:3,1) = [0.000000, 0.000000, 0.000000];
+	    initStates(1:3,1) = [0.600000, 0.720000, 0.000000];
 	    initStates(1:3,2) = [-0.260000, -0.720000, 0.510000];
 	    initStates(7:10,2) = [0.000000, 0.000000, -1.000000, 0.000000];
 	    initStates(7,1) = 1;
     
     case 4
-	    initStates(1:3,1) = [0.000000, 0.000000, 0.000000];
+	    initStates(1:3,1) = [0.600000, 0.000000, 0.000000];
 	    initStates(1:3,2) = [-0.700000, 0.000000, 0.000000];
 	    initStates(7:10,2) = [0.000000, 0.707100, 0.000000, 0.707100];
 	    initStates(7,1) = 1;
@@ -105,13 +105,13 @@ switch cfg.test_number
 	    initStates(7,1) = 1;
     
     case 6
-	    initStates(1:3,1) = [0.000000, 0.000000, 0.000000];
+	    initStates(1:3,1) = [0.600000, 0.720000, 0.000000];
 	    initStates(1:3,2) = [-0.260000, -0.720000, 0.510000];
 	    initStates(7:10,2) = [0.000000, 0.707100, 0.000000, 0.707100];
 	    initStates(7,1) = 1;
     
     case 7
-	    initStates(1:3,1) = [0.000000, 0.000000, 0.000000];
+	    initStates(1:3,1) = [0.600000, 0.000000, 0.000000];
 	    initStates(1:3,2) = [-0.700000, 0.000000, 0.000000];
 	    initStates(7:10,2) = [0.707100, 0.000000, 0.000000, 0.707100];
 	    initStates(7,1) = 1;
@@ -123,11 +123,10 @@ switch cfg.test_number
 	    initStates(7,1) = 1;
     
     case 9
-	    initStates(1:3,1) = [0.000000, 0.000000, 0.000000];
+	    initStates(1:3,1) = [0.600000, 0.720000, 0.000000];
 	    initStates(1:3,2) = [-0.260000, -0.720000, 0.510000];
 	    initStates(7:10,2) = [0.707100, 0.000000, 0.000000, 0.707100];
 	    initStates(7,1) = 1;
-
 end
 
 cfg.initStates = initStates;
